@@ -1,0 +1,105 @@
+%% beamerthemeAalto.sty 1.0-prerelease
+%% Aalto University Beamer wrapper theme
+%% ---
+%% Copyright:
+%% Aalto University Marketing and Communications
+%% visu(a)aaltouniversity.fi
+%%
+%% Created and maintained by:
+%% Jussi Pekonen
+%% Department of Signal Processing and Acoustics
+%% Aalto University School of Electrical Engineering
+%%
+%% URL: https://wiki.aalto.fi/display/aaltolatex/
+%% ---
+%% LICENSE
+%% The Aalto University Beamer wrapper theme has been published under the Creative Commons Attribution license
+%% (\url{http://creativecommons.org/licenses/by/1.0/}). This means that you can use the theme freely in your own documents.
+%%
+%% If you have an inner or outer theme that has been approved by the Aalto University Marketing and Communications, contact the
+%% maintainer(s) to have your inner/outer theme to be included to the interface this wrapper theme provides.
+%% ---
+%% Updated 2011/11/09
+
+%% Declare theme options
+% Option 'colors', for using colors
+\DeclareOptionBeamer{colors}{%
+	\PassOptionsToPackage{colors}{beamercolorthemeAalto}%
+}
+% Option 'blackandwhite', for using only black and white
+\DeclareOptionBeamer{blackandwhite}{%
+	\PassOptionsToPackage{blackandwhite}{beamercolorthemeAalto}%
+}
+% Option 'grayscale', for using only black, gray, and white
+\DeclareOptionBeamer{grayscale}{%
+	\PassOptionsToPackage{grayscale}{beamercolorthemeAalto}%
+}
+% Option 'serifmath', for using the serif font for mathematics
+\DeclareOptionBeamer{serifmath}{%
+	\PassOptionsToPackage{serifmath}{beamerfontthemeAalto}%
+}
+% Option 'default', for using the default theme
+\DeclareOptionBeamer{default}{%
+	\PassOptionsToPackage{default}{beamerinnerthemeAalto}%
+	\PassOptionsToPackage{default}{beamerouterthemeAalto}%
+}
+% Option 'sidebar', for using the  sidebar theme
+\DeclareOptionBeamer{sidebar}{%
+	\PassOptionsToPackage{sidebar}{beamerinnerthemeAalto}%
+	\PassOptionsToPackage{sidebar}{beamerouterthemeAalto}%
+}
+% Option 'outline', an alias for option 'sidebar'
+\DeclareOptionBeamer{outline}{%
+	\PassOptionsToPackage{sidebar}{beamerinnerthemeAalto}%
+	\PassOptionsToPackage{sidebar}{beamerouterthemeAalto}%
+}
+% Option 'showpartcontents', for the default inner theme
+\DeclareOptionBeamer{showpartcontents}{%
+	\PassOptionsToPackage{showpartcontents=#1}{beamerinnerthemeAalto}%
+}
+% Option 'hidesubsections', for the default inner theme
+\DeclareOptionBeamer{hidesubsections}{%
+	\PassOptionsToPackage{hidesubsections}{beamerinnerthemeAalto}%
+}
+% Option 'hideothersubsections', for the sidebar outer theme
+\DeclareOptionBeamer{hideothersubsections}{%
+	\PassOptionsToPackage{hideothersubsections}{beamerouterthemeAalto}%
+}
+% Option 'hideallsubsections', for the sidebar outer theme
+\DeclareOptionBeamer{hideallsubsections}{%
+	\PassOptionsToPackage{hideallsubsections}{beamerouterthemeAalto}%
+}
+% Option 'school', for including the school name in the logo
+\DeclareOptionBeamer{school}{%
+	\PassOptionsToPackage{school=#1}{beamerouterthemeAalto}%
+}
+% Option 'institute', for including the institute name in the logo
+\DeclareOptionBeamer{institute}{%
+	\PassOptionsToPackage{institute=#1}{beamerouterthemeAalto}%
+}
+% Option 'invariant', for keeping a certain logo throughout the entire presentation
+\DeclareOptionBeamer{invariant}{%
+	\PassOptionsToPackage{invariant}{beamerouterthemeAalto}%
+}
+
+%% Default options
+\ExecuteOptionsBeamer{default}
+
+%% Process the options
+\ProcessOptionsBeamer
+
+\mode<presentation>
+
+%% Theme declarations
+% Color theme
+\usecolortheme{Aalto}
+% Font theme
+\usefonttheme{Aalto}
+% Inner theme
+\useinnertheme{Aalto}
+% Outer theme
+\useoutertheme{Aalto}
+
+%% New command \useextratheme for extra definitions
+\newcommand{\useextratheme}[1]{\usepackage{beamerextratheme#1}}
+\mode<all>

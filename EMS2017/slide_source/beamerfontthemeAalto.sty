@@ -1,0 +1,102 @@
+%% beamerfontthemeAalto.sty version 1.0-prerelease
+%% Font definitions to be used in the Aalto University Beamer themes
+%% ---
+%% Copyright:
+%% Aalto University Marketing and Communications
+%% visu(a)aaltouniversity.fi
+%%
+%% Created and maintained by:
+%% Jussi Pekonen
+%% Department of Signal Processing and Acoustics
+%% Aalto University School of Electrical Engineering
+%%
+%% URL: https://wiki.aalto.fi/display/aaltolatex/
+%% ---
+%% LICENSE
+%% The Aalto University Beamer font theme has been published under the Creative Commons Attribution license
+%% (\url{http://creativecommons.org/licenses/by/1.0/}). This means that you can use the theme freely in your own documents and Beamer
+%% themes.
+%%
+%% However, if you want your Beamer theme to have an offical Aalto University Beamer theme status, it \emph{needs} to be approved by the
+%% Aalto University Marketing and Communications. In addition, if your Beamer theme will be having the official status and you use some font
+%% definitions not included in the current version of the Aalto University Beamer font theme, contact the maintainer(s) in order to have your
+%% definitions included.
+%% ---
+%% Updated 2011/11/09
+
+%% Declare options
+% Option 'serifmath', for using the serif font for mathematics
+\DeclareOptionBeamer{serifmath}{%
+	\mode<presentation>
+	\usefonttheme[onlymath]{serif}%
+	\mode<all>
+}
+
+%% Process the options
+\ProcessOptionsBeamer
+
+\mode<presentation>
+
+%% Font definitions
+% Abstract
+\setbeamerfont{abstract}{size={\small},family={\rmfamily}}
+% Abstract title
+\setbeamerfont{abstract title}{series={\bfseries},family={\sffamily}}
+% Alerted text
+\setbeamerfont{alerted text}{series={\bfseries}}
+% Block body alerted
+\setbeamerfont{block body alerted}{series={\bfseries}}
+% Block title
+\setbeamerfont{block title}{size={\large},series={\bfseries}}
+% Block title alerted
+\setbeamerfont{block title alerted}{size={\Large},series={\bfseries}}
+% Block title example
+\setbeamerfont{block title example}{size={\large},series={\mdseries}}
+% Caption name
+\setbeamerfont{caption name}{series={\bfseries}}
+% Description item
+\setbeamerfont{description item}{series={\bfseries}}
+% Enumerate item
+\setbeamerfont{enumerate item}{series={\bfseries}}
+% Enumerate subsubitem
+\setbeamerfont{enumerate subsubitem}{shape={\itshape}}
+% Footline
+\setbeamerfont{footline}{size*={5.4pt}{2.05mm},series={\bfseries}}
+% Footnote
+\setbeamerfont{footnote}{family={\rmfamily}}
+% Framesubtitle
+\setbeamerfont{framesubtitle}{size={\small}}
+% Quotation
+\setbeamerfont{quotation}{family={\rmfamily},shape={\itshape},size={\small}}
+% Quote
+\setbeamerfont{quote}{family={\rmfamily},shape={\itshape},size={\small}}
+% Part page
+\setbeamerfont{part page}{size={\huge},series={\bfseries}}
+% Section in sidebar
+\setbeamerfont{section in sidebar}{size*={5.4pt}{6.5pt},series={\bfseries}}
+% Section in sidebar shaded
+\setbeamerfont{section in sidebar shaded}{size*={5.4pt}{6.5pt}}
+% Section in toc
+\setbeamerfont{section in toc}{size={\normalsize},series={\bfseries}}
+% Subsection in sidebar
+\setbeamerfont{subsection in sidebar}{size*={4.9pt}{6.0pt},series={\bfseries}}
+% Subsection in sidebar shaded
+\setbeamerfont{subsection in sidebar shaded}{size*={4.9pt}{6.0pt}}
+% Subsection in toc
+\setbeamerfont{subsection in toc}{size={\small}}
+% Subsubsection in sidebar
+\setbeamerfont{subsubsection in sidebar}{size*={4.4pt}{5.5pt},series={\bfseries}}
+% Subsubsection in sidebar shaded
+\setbeamerfont{subsubsection in sidebar shaded}{size*={4.4pt}{5.5pt}}
+% Subsubsection in toc
+\setbeamerfont{subsubsection in toc}{size={\footnotesize}}
+% Structure
+\setbeamerfont{structure}{series={\bfseries}}
+% Titlelike
+\setbeamerfont{titlelike}{size={\Large},series={\bfseries}}
+% Title page
+\setbeamerfont{title page}{size={\Large},series={\bfseries}}
+% Verse
+\setbeamerfont{verse}{family={\rmfamily},shape={\itshape},size={\small}}
+
+\mode<all>

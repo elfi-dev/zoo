@@ -1,0 +1,44 @@
+%% beamerinnerthemeAalto-sidebar.sty version 1.0-prerelease
+%% Sidebar (outline) Aalto University Beamer inner theme
+%% ---
+%% Copyright:
+%% Aalto University Marketing and Communications
+%% visu@aaltouniversity.fi
+%%
+%% Created by:
+%% Jussi Pekonen
+%% Department of Signal Processing and Acoustics
+%% Aalto University School of Electrical Engineering
+%% ---
+%% LICENSE
+%% The sidebar (outline) Aalto University Beamer inner theme has been published under the Creative Commons Attribution license
+%% (\url{http://creativecommons.org/licenses/by/1.0/}). This means that you can use the theme freely in your own documents and Beamer
+%% themes.
+%%
+%% However, if you want your Beamer theme to have an offical Aalto University Beamer theme status, it \emph{needs} to be approved by the
+%% Aalto University Marketing and Communications. Moreover, you \emph{are not allowed} to write your own sidebar inner theme definitions
+%% for Aalto University. However, if you want a certain definition to be included to the sidebar theme, contact the maintainer(s) in order to have
+%% your definition proposition included.
+%% ---
+%% Updated 2011/11/09
+
+\mode<presentation>
+
+%% Get the inner theme templates, suppresses the table of contents of parts
+\useinnertheme[hidepartcontents]{Aalto-default}
+
+%% Set the lengths
+% Set the horizontal offset of the part title box template
+\setlength{\AaltoBeamerPartHOffset}{-42.15pt}
+% Set the horizontal offset of the frame title
+\setlength{\AaltoBeamerFrameTitleHOffset}{-2cm}\addtolength{\AaltoBeamerFrameTitleHOffset}{14pt}
+
+%% Modified Beamer template definitions
+% Part page
+\setbeamertemplate{part page}{%
+	\addtolength{\textwidth}{-\AaltoBeamerPartHOffset}%
+	\usebeamertemplate{Aalto part page}%
+	\addtolength{\textwidth}{\AaltoBeamerPartHOffset}%
+}
+
+\mode<all>

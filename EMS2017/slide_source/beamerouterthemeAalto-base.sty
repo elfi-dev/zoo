@@ -1,0 +1,256 @@
+%% beamerouterthemeAalto-base.sty version 1.0-prerelease
+%% Fundamental definitions to be used in the Aalto University outer Beamer themes
+%% ---
+%% Copyright:
+%% Aalto University Marketing and Communications
+%% visu(a)aaltouniversity.fi
+%%
+%% Created and maintained by:
+%% Jussi Pekonen
+%% Department of Signal Processing and Acoustics
+%% Aalto University School of Electrical Engineering
+%%
+%% URL: https://wiki.aalto.fi/display/aaltolatex/
+%% ---
+%% LICENSE
+%% The fundamental Aalto University Beamer outer theme definitions has been published under the Creative Commons Attribution license
+%% (\url{http://creativecommons.org/licenses/by/1.0/}). This means that you can use the theme freely in your own documents and Beamer
+%% outer themes.
+%% However, if you want your Beamer theme to have an offical Aalto University Beamer theme status, it \emph{needs} to be approved by the
+%% Aalto University Marketing and Communications. In addition, if your Beamer theme will be having the official status and you use some
+%% fundamental outer theme definitions not included in the current version of the fundamental Aalto University Beamer outer theme, contact
+%% the maintainer(s) in order to have your definitions included.
+%% ---
+%% Updated 2011/11/09
+
+%% Required for the conditional formatting and for the conditionals
+\RequirePackage{ifthen}
+% Conditional for the invariance
+\newboolean{AaltoBeamerVaryTheme}
+\setboolean{AaltoBeamerVaryTheme}{true}
+% Command for checking whether this outer theme is used
+\gdef\AaltoBeamerVaryTheme{true}
+
+%% Declare theme options
+% Option 'school', for including the school name in the logo
+\DeclareOptionBeamer{school}{%
+	\PassOptionsToPackage{#1}{aaltologo}%
+}
+% Option 'institute', for including the institute name in the logo
+\DeclareOptionBeamer{institute}{%
+	\PassOptionsToPackage{#1}{aaltologo}%
+}
+% Option 'invariant', for keeping a certain logo throughout the entire presentation
+\DeclareOptionBeamer{invariant}{%
+	\setboolean{AaltoBeamerVaryTheme}{false}%
+	\gdef\AaltoBeamerVaryTheme{false}%
+}
+
+%% Process the options
+\ProcessOptionsBeamer
+
+\mode<presentation>
+
+%% Required for the logo
+\RequirePackage{aaltologo}
+
+%% Required color definitions, if not loaded yet
+\ifthenelse{\isundefined{\AaltoBeamerColorTheme}}{%
+	\gdef\AaltoBeamerColorTheme{colors}%
+	\definecolor{aaltoBeamerColor01}{named}{aaltoBlack}%
+	\definecolor{aaltoBeamerColor02}{named}{aaltoBlack}%
+	\definecolor{aaltoBeamerColor11}{named}{aaltoBlack}%
+	\definecolor{aaltoBeamerColor12}{named}{aaltoBlack}%
+	\definecolor{aaltoBeamerColor21}{named}{aaltoBlack}%
+	\definecolor{aaltoBeamerColor22}{named}{aaltoBlack}%
+	\definecolor{aaltoBeamerColor31}{named}{aaltoBlack}%
+	\definecolor{aaltoBeamerColor32}{named}{aaltoBlack}%
+}{}
+
+%% Redefined \logo command
+\renewcommand{\logo}[1]{\titlegraphic{#1}}
+
+%% Sets the Beamer templates
+% Frametitle continuation
+\setbeamertemplate{frametitle continuation}[from second][\insertcontinuationcountroman]
+% Logo
+\setbeamertemplate{logo}{}
+% Navigation symbols
+\setbeamertemplate{navigation symbols}{}
+
+%% New outer theme template definitions
+% Vertical offset for the title page contents
+\newlength{\AaltoBeamerTitlePageVOffset}\setlength{\AaltoBeamerTitlePageVOffset}{0pt}
+% Horizontal offset for the title page contents
+\newlength{\AaltoBeamerTitlePageHOffset}\setlength{\AaltoBeamerTitlePageHOffset}{0pt}
+% The width of the area reserved for the logos
+\newlength{\AaltoBeamerOtherLogosWidth}\setlength{\AaltoBeamerOtherLogosWidth}{0pt}
+% Logo template for the title frame
+\setbeamertemplate{Aalto logo template}{%
+	\begin{minipage}[b]{100pt}%
+		\vspace*{18pt}%
+		\AaltoLogoLarge{0.41}{\AaltoLogoMark}{\AaltoLogoColor}%
+	\end{minipage}%
+	\setlength{\AaltoBeamerOtherLogosWidth}{\textwidth}%
+	\addtolength{\AaltoBeamerOtherLogosWidth}{-100pt}%
+	\begin{minipage}[b]{\AaltoBeamerOtherLogosWidth}%
+		\inserttitlegraphic%
+	\end{minipage}%
+	\vskip24.5pt%
+}
+% Conditional to indicate that the current frame is the title page
+\newboolean{AaltoBeamerTitlePage}\setboolean{AaltoBeamerTitlePage}{false}
+\gdef\AaltoBeamerTitlePage{false}
+% The height of the title page box
+\newlength{\AaltoBeamerTitleBoxHeight}\setlength{\AaltoBeamerTitleBoxHeight}{152pt}%
+% Title template for the title frame
+\setbeamertemplate{Aalto title template}{%
+	\gdef\AaltoBeamerTitlePage{true}%
+	\setboolean{AaltoBeamerTitlePage}{true}%
+	\begin{beamercolorbox}[left,sep={5pt}]{title page}%
+		\setlength{\linewidth}{\textwidth}%
+		\addtolength{\linewidth}{-10pt}%
+		\ifthenelse{\arabic{aaltologo_linecount} = 1}{\addtolength{\AaltoBeamerTitleBoxHeight}{-2.05mm}}{}%
+		\ifthenelse{\arabic{aaltologo_linecount} = 2}{\addtolength{\AaltoBeamerTitleBoxHeight}{-4.10mm}}{}%
+		\begin{minipage}[t][\AaltoBeamerTitleBoxHeight]{\linewidth}%
+			\flushleft%
+			\inserttitle%
+			\vskip0.2cm%
+			\scriptsize%
+			\ifthenelse{\equal{\insertsubtitle}{}}{\vspace{\baselineskip}}{\insertsubtitle}%
+			\vskip0.3cm%
+			\small%
+			\insertauthor\vskip0.2cm%
+			\scriptsize\itshape%
+			\insertinstitute\vskip0.3cm%
+			\small\upshape%
+			\insertdate%
+		\end{minipage}%
+		\setlength{\AaltoBeamerTitleBoxHeight}{152pt}%
+		\setlength{\linewidth}{\textwidth}%
+	\end{beamercolorbox}%
+}
+% Template for the title page
+\setbeamertemplate{Aalto title page}{%
+	\vspace*{\AaltoBeamerTitlePageVOffset}%
+	\hspace*{\AaltoBeamerTitlePageHOffset}%
+	\usebeamertemplate{Aalto logo template}%
+	\hspace*{\AaltoBeamerTitlePageHOffset}%
+	\usebeamertemplate{Aalto title template}%
+}
+% Title page
+\setbeamertemplate{title page}{%
+	\usebeamertemplate{Aalto title page}%
+}
+% Lenght for the left side margin
+\newlength{\AaltoBeamerFooterMarginLeft}\setlength{\AaltoBeamerFooterMarginLeft}{0pt}
+% Length for the right side margin
+\newlength{\AaltoBeamerFooterMarginRight}\setlength{\AaltoBeamerFooterMarginRight}{0pt}
+% Length for the footer rule
+\newlength{\AaltoBeamerFooterRuleWidth}\setlength{\AaltoBeamerFooterRuleWidth}{\paperwidth}
+% Length for the footer matter
+\newlength{\AaltoBeamerFooterWidth}\setlength{\AaltoBeamerFooterWidth}{\paperwidth}
+% Footline template
+\setbeamertemplate{Aalto footline template}{%
+	\null%
+	\hspace*{\AaltoBeamerFooterMarginLeft}%
+	\setlength{\AaltoBeamerFooterRuleWidth}{\paperwidth}%
+	\addtolength{\AaltoBeamerFooterRuleWidth}{-\AaltoBeamerFooterMarginLeft}%
+	\addtolength{\AaltoBeamerFooterRuleWidth}{-\AaltoBeamerFooterMarginRight}%
+	{\color{aaltoBeamerColor\arabic{aaltologo_color}1}%
+	\rule{\AaltoBeamerFooterRuleWidth}{2pt}}%
+	\vskip16pt%
+	\null\hspace{\AaltoBeamerFooterMarginLeft}%
+	\parbox[b][5.74mm]{113pt}{%
+		\AaltoLogoSmall{0.41}{\AaltoLogoMark}{\AaltoLogoColor}%
+	}%
+	\setlength{\AaltoBeamerFooterWidth}{\AaltoBeamerFooterRuleWidth}%
+	\addtolength{\AaltoBeamerFooterWidth}{-129pt}%
+	\hspace*{16pt}%
+	\parbox[b][5.74mm]{\AaltoBeamerFooterWidth}{%
+		\textcolor{aaltoBlack}{\insertshorttitle[width={0.83\AaltoBeamerFooterWidth}]}%
+		\hfill\textcolor{aaltoBlack}{\insertframenumber /\inserttotalframenumber}\\%
+		\insertshortauthor[width={0.64\AaltoBeamerFooterWidth}]%
+		\hfill\insertshortdate\\%
+		{\itshape\insertshortinstitute[width={0.5\AaltoBeamerFooterWidth}]}%
+		\hfill\insertshortsubtitle%
+	}%
+	\hspace*{\AaltoBeamerFooterMarginRight}%
+	\null%
+	\vspace{16pt}\null%
+}
+% Randomization template
+\setbeamertemplate{Aalto logo randomization template}{%
+	% Randomize the logo parameters, if the frame number will change!
+	\ifthenelse{\equal{\insertframenumber}{\insertframeendpage}}{%
+		% Randomize only, if the randomization is desired
+		\ifthenelse{\boolean{AaltoBeamerVaryTheme}}{%
+			\ifthenelse{\equal{\AaltoBeamerColorTheme}{colors}}{
+				\AaltoLogoRandomize%
+			}{%
+				\AaltoLogoRandomize[black]%
+			}%
+		}{}%
+	}{}%
+}
+% Footline template
+\setbeamertemplate{Aalto footline}{%
+	\ifthenelse{\equal{\AaltoBeamerTitlePage}{true}}{%
+%	\ifthenelse{\boolean{AaltoBeamerTitlePage}}{% Doesn't work for some reason...
+		% Suppress the footer in the title page
+		\gdef\AaltoBeamerTitlePage{false}%
+%		\setboolean{AaltoBeamerTitlePage}{false}% Doesn't work for some reason...
+	}{
+		\usebeamertemplate{Aalto footline template}%
+	}%
+	\usebeamertemplate{Aalto logo randomization template}%
+}
+% Footline
+\setbeamertemplate{footline}{%
+	\usebeamertemplate{Aalto footline}
+}
+% Sidebar
+\setbeamertemplate{Aalto sidebar}{%
+	\ifthenelse{\equal{\AaltoBeamerTitlePage}{true}}{%
+%	\ifthenelse{\boolean{AaltoBeamerTitlePage}}{% Doesn't work for some reason
+		% No sidebar on the title page
+	}{%
+		\ifthenelse{\isundefined{\AaltoBeamerPartPage}}{%
+			% The Aalto University inner theme is not used
+			\vspace*{54.5pt}%
+			\insertverticalnavigation{2cm}%
+			\vfill%
+		}{%
+			% The Aalto University inner theme is used	
+			\ifthenelse{\equal{\AaltoBeamerPartPage}{true}}{%
+				% No sidebar on the part page
+				\gdef\AaltoBeamerPartPage{false}%
+			}{%
+				\vspace*{54.5pt}%
+				\insertverticalnavigation{2cm}%
+				\vfill%
+			}%
+		}%
+	}%
+}
+
+%% Text margins
+% Left margin
+\newlength{\AaltoBeamerTextMarginLeft}\setlength{\AaltoBeamerTextMarginLeft}{\AaltoBeamerFooterMarginLeft}
+% Right margin
+\newlength{\AaltoBeamerTextMarginRight}\setlength{\AaltoBeamerTextMarginLeft}{\AaltoBeamerFooterMarginRight}
+
+%% Run a set of parameter settings in the beginning of the document
+\AtBeginDocument{%
+	% Set the marginals and the text width
+	\setbeamersize{text margin left={\AaltoBeamerTextMarginLeft},text margin right={\AaltoBeamerTextMarginRight}}%
+	\setlength{\linewidth}{\textwidth}%
+	% Randomize the logo parameters in the beginning of the document
+	\ifthenelse{\equal{\AaltoBeamerColorTheme}{colors}}{%
+	}{%
+		\gdef\AaltoLogoColor{aaltoBlack}%
+		\setcounter{aaltologo_color}{0}%
+	}%
+}
+
+\mode<all>

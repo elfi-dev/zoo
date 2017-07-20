@@ -1,0 +1,79 @@
+%% beamerouterthemeAalto.sty version 1.0-prerelease
+%% Aalto University Beamer outer theme wrapper theme
+%% ---
+%% Copyright:
+%% Aalto University Marketing and Communications
+%% visu(a)aaltouniversity.fi
+%%
+%% Created and maintained by:
+%% Jussi Pekonen
+%% Department of Signal Processing and Acoustics
+%% Aalto University School of Electrical Engineering
+%%
+%% URL: https://wiki.aalto.fi/display/aaltolatex/
+%% ---
+%% LICENSE
+%% The Aalto University Beamer outer theme wrapper theme has been published under the Creative Commons Attribution license
+%% (\url{http://creativecommons.org/licenses/by/1.0/}). This means that you can use the theme freely in your own documents.
+%%
+%% If you have an outer theme that has been approved by the Aalto University Marketing and Communications, contact the maintainer(s) to
+%% have your outer theme to be included to the interface this wrapper theme provides.
+%% ---
+%% Updated 2011/11/09
+
+%% Declare theme options
+% Option 'default', for using the default outer theme
+\DeclareOptionBeamer{default}{%
+	\gdef\AaltoBeamerOuterTheme{default}%
+}
+% Option 'sidebar', for using the sidebar outer theme
+\DeclareOptionBeamer{sidebar}{%
+	\gdef\AaltoBeamerOuterTheme{sidebar}%
+}
+% Option 'outline', an alias for 'sidebar'
+\DeclareOptionBeamer{outline}{%
+	\gdef\AaltoBeamerOuterTheme{sidebar}%
+}
+% Option 'hideothersubsections', for supressing the subsections of the inactive sections in the sidebar
+\DeclareOptionBeamer{hideothersubsections}{%
+	\PassOptionsToPackage{hideothersubsections}{beamerouterthemeAalto-sidebar}%
+}
+% Option 'hideallsubsections', for supressing all subsections in the sidebar
+\DeclareOptionBeamer{hideallsubsections}{%
+	\PassOptionsToPackage{hideallsubsections}{beamerouterthemeAalto-sidebar}%
+}
+% Option 'school', for including the school name in the logo
+\DeclareOptionBeamer{school}{%
+	\PassOptionsToPackage{school=#1}{beamerouterthemeAalto-default}%
+	\PassOptionsToPackage{school=#1}{beamerouterthemeAalto-sidebar}%
+}
+% Option 'institute', for including the institute name in the logo
+\DeclareOptionBeamer{institute}{%
+	\PassOptionsToPackage{institute=#1}{beamerouterthemeAalto-default}%
+	\PassOptionsToPackage{institute=#1}{beamerouterthemeAalto-sidebar}%
+}
+% Option 'invariant', for keeping a certain logo throughout the entire presentation
+\DeclareOptionBeamer{invariant}{%
+	\PassOptionsToPackage{invariant}{beamerouterthemeAalto-default}%
+	\PassOptionsToPackage{invariant}{beamerouterthemeAalto-sidebar}%
+}
+
+%% Default options
+\ExecuteOptionsBeamer{default}
+
+%% Process the options
+\ProcessOptionsBeamer
+
+\mode<presentation>
+
+%% Required for choosing the theme
+\RequirePackage{ifthen}
+
+%% Set the outer theme
+\ifthenelse{\equal{\AaltoBeamerOuterTheme}{sidebar}}{%
+	\useoutertheme{Aalto-sidebar}%
+}{%
+	\useoutertheme{Aalto-default}%
+}
+
+\mode<all>

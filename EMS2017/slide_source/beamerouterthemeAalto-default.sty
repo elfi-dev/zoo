@@ -1,0 +1,60 @@
+%% beamerouterthemeAalto-default.sty version 1.0-prerelease
+%% Default Aalto University Beamer outer theme
+%% ---
+%% Copyright:
+%% Aalto University Marketing and Communications
+%% visu@aaltouniversity.fi
+%%
+%% Created by:
+%% Jussi Pekonen
+%% Department of Signal Processing and Acoustics
+%% Aalto University School of Electrical Engineering
+%% ---
+%% LICENSE
+%% The default Aalto University Beamer outer theme has been published under the Creative Commons Attribution license
+%% (\url{http://creativecommons.org/licenses/by/1.0/}). This means that you can use the theme freely in your own documents and Beamer
+%% themes.
+%%
+%% However, if you want your Beamer theme to have an offical Aalto University Beamer theme status, it \emph{needs} to be approved by the
+%% Aalto University Marketing and Communications. Moreover, you \emph{are not allowed} to write your own default outer theme definitions for
+%% Aalto University. However, if you want a certain definition to be included to the default theme, contact the maintainer(s) in order to have your
+%% definition proposition included.
+%% ---
+%% Updated 2011/11/09
+
+%% Declare theme options
+% Option 'school', for including the school name in the logo
+\DeclareOptionBeamer{school}{%
+	\PassOptionsToPackage{school=#1}{beamerouterthemeAalto-base}%
+}
+% Option 'institute', for including the institute name in the logo
+\DeclareOptionBeamer{institute}{%
+	\PassOptionsToPackage{institute=#1}{beamerouterthemeAalto-base}%
+}
+% Option 'invariant', for keeping a certain logo throughout the entire presentation
+\DeclareOptionBeamer{invariant}{%
+	\PassOptionsToPackage{invariant}{beamerouterthemeAalto-base}%
+}
+
+%% Process the options
+\ProcessOptionsBeamer
+
+\mode<presentation>
+
+%% Required fundamental definitions
+\RequirePackage{beamerouterthemeAalto-base}
+
+%% Set the outer theme
+\useoutertheme{default}
+
+%% Set the lengths
+% Left margin of the footer
+\setlength{\AaltoBeamerFooterMarginLeft}{21.5pt}
+% Right margin of the footer
+\setlength{\AaltoBeamerFooterMarginRight}{21.5pt}
+% Left margin of the text
+\setlength{\AaltoBeamerTextMarginLeft}{21.5pt}
+% Right margn of the text
+\setlength{\AaltoBeamerTextMarginRight}{21.5pt}
+
+\mode<all>

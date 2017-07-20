@@ -1,0 +1,296 @@
+%% beamerinnerthemeAalto-base.sty version 1.0-prerelease
+%% Fundamental definitions to be used in the Aalto University inner Beamer themes
+%% ---
+%% Copyright:
+%% Aalto University Marketing and Communications
+%% visu(a)aaltouniversity.fi
+%%
+%% Created and maintained by:
+%% Jussi Pekonen
+%% Department of Signal Processing and Acoustics
+%% Aalto University School of Electrical Engineering
+%%
+%% URL: https://wiki.aalto.fi/display/aaltolatex/
+%% ---
+%% LICENSE
+%% The fundamental Aalto University Beamer inner theme definitions has been published under the Creative Commons Attribution license
+%% (\url{http://creativecommons.org/licenses/by/1.0/}). This means that you can use the theme freely in your own documents and Beamer
+%% inner themes.
+%% 
+%% However, if you want your Beamer theme to have an offical Aalto University Beamer theme status, it \emph{needs} to be by approved the
+%% Aalto University Marketing and Communications. In addition, if your Beamer theme will be having the official status and you use some
+%% fundamental inner theme definitions not included in the current version of the fundamental Aalto University Beamer inner theme, contact
+%% the maintainer(s) in order to have your definitions included.
+%% ---
+%% Updated 2011/11/09
+
+%% Required for the conditional formatting and conditionals
+\RequirePackage{ifthen}
+% Conditional for showing the part contents on a separate slide
+\newboolean{AaltoBeamerPartContents}
+\setboolean{AaltoBeamerPartContents}{false}
+\newboolean{AaltoBeamerPartContentsSubsections}
+\setboolean{AaltoBeamerPartContentsSubsections}{true}
+% Counter that holds the column count to be used in the table of contents of parts
+\newcounter{AaltoBeamerPartContentsColumnCount}
+\setcounter{AaltoBeamerPartContentsColumnCount}{1}
+
+%% Declare theme options
+% Option 'showpartcontents', for showing the automatic display of the table of contents when parts are used
+\DeclareOptionBeamer{showpartcontents}{%
+	\setboolean{AaltoBeamerPartContents}{true}%
+	\ifthenelse{\equal{#1}{}}{%
+		\setcounter{AaltoBeamerPartContentsColumnCount}{1}%
+	}{%
+		\setcounter{AaltoBeamerPartContentsColumnCount}{#1}%
+	}%
+}
+% Option 'hidesubsections', for suppressing the subsections in parts' table of contents
+\DeclareOptionBeamer{hidesubsections}{%
+	\setboolean{AaltoBeamerPartContentsSubsections}{false}%
+}
+
+%% Process the options
+\ProcessOptionsBeamer
+
+\mode<presentation>
+
+%% Set the inner theme
+\useinnertheme{rectangles}
+
+%% Required for multicolumn part table of contents
+\RequirePackage{multicol}
+
+%% Required color definitions, if not loaded yet
+\ifthenelse{\isundefined{\AaltoBeamerColorTheme}}{%
+	\gdef\AaltoBeamerColorTheme{colors}%
+	\definecolor{aaltoBeamerColor01}{named}{black}%
+	\definecolor{aaltoBeamerColor02}{named}{black}%
+	\definecolor{aaltoBeamerColor11}{named}{black}%
+	\definecolor{aaltoBeamerColor12}{named}{black}%
+	\definecolor{aaltoBeamerColor21}{named}{black}%
+	\definecolor{aaltoBeamerColor22}{named}{black}%
+	\definecolor{aaltoBeamerColor31}{named}{black}%
+	\definecolor{aaltoBeamerColor32}{named}{black}%
+}{}
+\ifthenelse{\isundefined{\AaltoLogoColor}}{%
+	\newcounter{aaltologo_color}\setcounter{aaltologo_color}{0}%
+}{}
+
+%% Sets the Beamer templates
+% Abstract title
+\setbeamertemplate{abstract title}{%
+	{\usebeamercolor{abstract title}%
+	\usebeamerfont{abstract title}%
+	\flushleft%
+	\abstractname}%
+	\vskip0.3cm%
+}
+% Bibliography entry journal (doesn't work for some reason...)
+\setbeamertemplate{bibliography entry journal}{}
+% Bibliography entry note
+\setbeamertemplate{bibliography entry note}{}
+% Bibliography entry title
+\setbeamertemplate{bibliography entry title}{}
+% Bibliography item
+\setbeamertemplate{bibliography item}[text]
+% Footnote
+\setbeamertemplate{footnote}{\begin{minipage}{\textwidth}\noindent\insertfootnotemark\insertfootnotetext\end{minipage}\vskip0.1cm}
+% Section in toc
+\setbeamertemplate{section in toc}[default]
+% Subsection in toc
+\setbeamertemplate{subsection in toc}[default]
+% Subsubsection in toc
+\setbeamertemplate{subsubsection in toc}[default]
+% Sections/subsections in toc shaded
+\setbeamertemplate{sections/subsections in toc shaded}[default][100]
+% Enumerate items
+\setbeamertemplate{enumerate items}[default]
+
+%% New inner theme template definitions
+% Vertical offset of the frame title
+\newlength{\AaltoBeamerFrameTitleVOffset}\setlength{\AaltoBeamerFrameTitleVOffset}{0pt}
+% Horizontal offset of the frame title
+\newlength{\AaltoBeamerFrameTitleHOffset}\setlength{\AaltoBeamerFrameTitleHOffset}{0pt}
+% Width the part number box in the frame title
+\newlength{\AaltoBeamerFrameTitlePartNumberWidth}\setlength{\AaltoBeamerFrameTitlePartNumberWidth}{15pt}
+% Width of the frame title box
+\newlength{\AaltoBeamerFrameTitleWidth}\setlength{\AaltoBeamerFrameTitleWidth}{\textwidth}
+% Part number in the frame title template
+\setbeamertemplate{Aalto part number in frametitle}{%
+	\begin{minipage}[t][30pt]{\AaltoBeamerFrameTitlePartNumberWidth}%
+		\flushleft%
+		\insertpartnumber%
+	\end{minipage}%
+	\addtolength{\AaltoBeamerFrameTitleWidth}{-\AaltoBeamerFrameTitlePartNumberWidth}%
+}
+% Frametitle template
+\setbeamertemplate{Aalto frametitle template}{%
+	\addtolength{\AaltoBeamerFrameTitleWidth}{-\AaltoBeamerFrameTitleHOffset}%
+	\begin{minipage}[t][30pt]{\AaltoBeamerFrameTitleWidth}%
+		\flushleft%
+		\insertframetitle%
+		\ifthenelse{\equal{\insertframesubtitle}{}}{}{%
+			\\\usebeamerfont{framesubtitle}
+			\insertframesubtitle%
+		}%
+	\end{minipage}%
+}
+% Frametitle
+\setbeamertemplate{Aalto frametitle}{%
+	\vspace*{\AaltoBeamerFrameTitleVOffset}%
+	\hspace*{\AaltoBeamerFrameTitleHOffset}%
+	\setlength{\AaltoBeamerFrameTitleWidth}{\textwidth}%
+	\ifthenelse{\equal{\insertpartnumber}{0}}{%
+		% Doesn't use parts, no part number in the frametitle
+	}{%
+		% Uses parts, part number in the frametitle
+		\usebeamertemplate{Aalto part number in frametitle}%
+	}%
+	\usebeamertemplate{Aalto frametitle template}%
+}
+% Frametitle
+\setbeamertemplate{frametitle}{%
+	\usebeamertemplate{Aalto frametitle}%
+}
+% Vertical offset for the part title box template
+\newlength{\AaltoBeamerPartVOffset}\setlength{\AaltoBeamerPartVOffset}{0pt}
+% Horizontal offset for the part title box template
+\newlength{\AaltoBeamerPartHOffset}\setlength{\AaltoBeamerPartHOffset}{0pt}
+% Height of the part title box
+\newlength{\AaltoBeamerPartBoxHeight}
+\setlength{\AaltoBeamerPartBoxHeight}{\paperheight}\addtolength{\AaltoBeamerPartBoxHeight}{-74.65pt}
+% Vertical offset for the part's table of contents template
+\newlength{\AaltoBeamerPartContentsVOffset}\setlength{\AaltoBeamerPartContentsVOffset}{0pt}
+% Horizontal offset for the part's table of contents template
+\newlength{\AaltoBeamerPartContentsHOffset}\setlength{\AaltoBeamerPartContentsHOffset}{0pt}
+% Conditional to indicate that the current frame is a part page
+\gdef\AaltoBeamerPartPage{false}
+\newboolean{AaltoBeamerPartPage}\setboolean{AaltoBeamerPartPage}{false}
+% Part page template
+\setbeamertemplate{Aalto part page}{%
+	\ifthenelse{\isundefined{\AaltoBeamerVaryTheme}}{%
+		% The Aalto University outer theme is not used
+	}{%
+		\ifthenelse{\equal{\AaltoBeamerVaryTheme}{true}}{%
+			% Don't randomize if randomization is used
+		}{%
+			\usebeamertemplate{Aalto logo randomization template}%
+		}%
+	}%
+	\gdef\AaltoBeamerPartPage{true}%
+	\setboolean{AaltoBeamerPartPage}{true}%
+	\vspace*{\AaltoBeamerPartVOffset}%
+	\hspace*{\AaltoBeamerPartHOffset}%
+	\begin{beamercolorbox}[left,sep={5pt}]{part page}%
+		\setlength{\linewidth}{\textwidth}%
+		\addtolength{\linewidth}{-10pt}%
+		\begin{minipage}[t][\AaltoBeamerPartBoxHeight]{\linewidth}%
+			\flushleft%
+			{\fontsize{25pt}{25pt}\selectfont\insertpartnumber}%
+			\vskip0.2cm%
+			\insertpart%
+		\end{minipage}%
+		\setlength{\linewidth}{\textwidth}%		
+	\end{beamercolorbox}%
+}
+% Part page
+\setbeamertemplate{part page}{%
+	\usebeamertemplate{Aalto part page}%
+}
+% Frame title for the table of contents of parts
+\setbeamertemplate{Aalto part contents frametitle}{%
+	\vspace*{\AaltoBeamerPartContentsVOffset}%
+	\hspace*{\AaltoBeamerPartContentsHOffset}%
+	\setlength{\AaltoBeamerFrameTitleWidth}{\textwidth}%
+	\ifthenelse{\equal{\insertpartnumber}{0}}{%
+		% Doesn't use parts, no part number in the frametitle
+	}{%
+		% Uses parts, part number in the frametitle
+		\begin{minipage}[t][30pt]{\AaltoBeamerFrameTitlePartNumberWidth}%
+			\flushleft%
+			\usebeamerfont{frametitle}%
+			\textcolor{aaltoBeamerColor\arabic{aaltologo_color}1}{\insertpartnumber}%
+		\end{minipage}%
+		\addtolength{\AaltoBeamerFrameTitleWidth}{-\AaltoBeamerFrameTitlePartNumberWidth}%
+	}%
+	\addtolength{\AaltoBeamerFrameTitleWidth}{-\AaltoBeamerPartContentsHOffset}%
+	\begin{minipage}[t][30pt]{\AaltoBeamerFrameTitleWidth}%
+		\flushleft%
+		\usebeamerfont{frametitle}%
+		\textcolor{aaltoBeamerColor\arabic{aaltologo_color}1}{\insertshortpart}%
+	\end{minipage}%
+}
+% Table of contents of parts listings
+\setbeamertemplate{Aalto part contents lists}{%
+	\ifthenelse{\boolean{AaltoBeamerPartContentsSubsections}}{%
+		\tableofcontents%
+	}{%
+		\tableofcontents[hideallsubsections]%
+	}%
+}
+% Table of contents of parts template
+\setbeamertemplate{Aalto part contents}{%
+	\ifthenelse{\boolean{AaltoBeamerPartContents}}{%
+		\ifthenelse{\arabic{AaltoBeamerPartContentsColumnCount} > 1}{%
+			\begin{multicols*}{\arabic{AaltoBeamerPartContentsColumnCount}}%
+				\raggedcolumns%
+				\usebeamertemplate{Aalto part contents lists}%
+			\end{multicols*}%
+		}{%
+			\usebeamertemplate{Aalto part contents lists}%
+		}%
+	}{}%
+}
+
+%% Command for changing the column count in the table of contents of parts
+\newcommand{\toccolumncount}[1]{\setcounter{AaltoBeamerPartContentsColumnCount}{#1}}
+
+%% Commands and definitions for showing the presentation parts
+% Adapted from the answer of Ulrich Schwarz given at
+% http://tex.stackexchange.com/questions/5285/tableofcontents-from-part-commands-in-beamer
+\makeatletter
+\define@key{beamertoc}{onlyparts}[]{%
+	\c@tocdepth=-1\relax%
+}
+\let\AaltoBeamerPartsInUse0
+\def\AaltoBeamerUsesParts{0}%
+\newcommand{\beamer@partintoc}[3]{%
+	\ifnum\c@tocdepth=-1\relax%
+		\makebox[1.5em]{\textcolor{aaltoBeamerColor\arabic{aaltologo_color}1}{\large\rmfamily\bfseries #1.}}\space%
+		{\large\rmfamily\bfseries #2}\vfill%
+	\fi%
+}
+\newcommand{\presentationcontents}{%
+	\ifthenelse{\equal{\AaltoBeamerPartsInUse}{0}}{%
+		\ifthenelse{\arabic{AaltoBeamerPartContentsColumnCount} > 1}{%
+			\begin{multicols*}{\arabic{AaltoBeamerPartContentsColumnCount}}%
+				\raggedcolumns%
+				\ifthenelse{\boolean{AaltoBeamerPartContentsSubsections}}{%
+					\tableofcontents%
+				}{%
+					\tableofcontents[hideallsubsections]%
+				}%
+			\end{multicols*}%
+		}{%
+			\ifthenelse{\boolean{AaltoBeamerPartContentsSubsections}}{%
+				\tableofcontents%
+			}{%
+				\tableofcontents[hideallsubsections]%
+			}%
+		}%
+	}{%
+		\tableofcontents[onlyparts]%
+		\ifthenelse{\boolean{AaltoBeamerPartContentsSubsections}}{%
+			\c@tocdepth=2\relax%
+		}{%
+			\c@tocdepth=0\relax%
+		}%
+	}%
+}
+\AtEndDocument{%
+	\immediate\write\@auxout{\string\global\string\@namedef{AaltoBeamerPartsInUse}{\AaltoBeamerUsesParts}}%
+}
+\makeatother
+
+\mode<all>

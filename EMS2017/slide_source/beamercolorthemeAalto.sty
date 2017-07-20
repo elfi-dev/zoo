@@ -1,0 +1,159 @@
+%% beamercolorthemeAalto.sty version 1.0-prerelease
+%% Color definitions to be used in the Aalto University Beamer themes
+%% ---
+%% Copyright:
+%% Aalto University Marketing and Communications
+%% visu(a)aaltouniversity.fi
+%%
+%% Created and maintained by:
+%% Jussi Pekonen
+%% Department of Signal Processing and Acoustics
+%% Aalto University School of Electrical Engineering
+%%
+%% URL: https://wiki.aalto.fi/display/aaltolatex/
+%% ---
+%% LICENSE
+%% The Aalto University Beamer color theme has been published under the Creative Commons Attribution license
+%% (\url{http://creativecommons.org/licenses/by/1.0/}). This means that you can use the theme freely in your own documents and Beamer
+%% themes.
+%%
+%% However, if you want your Beamer theme to have an offical Aalto University Beamer theme status, it \emph{needs} to be approved by the
+%% Aalto University Marketing and Communications. In addition, if your Beamer theme will be having the official status and you use some color
+%% definitions not included in the current version of the Aalto University Beamer color theme, contact the maintainer(s) in order to have your
+%% definitions included.
+%% ---
+%% Updated 2011/11/09
+
+%% Declare options
+% Option 'colors', for using colors
+\DeclareOptionBeamer{colors}{%
+	\gdef\AaltoBeamerColorTheme{colors}%
+}
+% Option 'blackandwhite', for using only black and white
+\DeclareOptionBeamer{blackandwhite}{%
+	\gdef\AaltoBeamerColorTheme{blackandwhite}%
+}
+% Option 'grayscale', for using only black, gray, and white
+\DeclareOptionBeamer{grayscale}{%
+	\gdef\AaltoBeamerColorTheme{grayscale}%
+}
+
+%% Default options
+\ExecuteOptionsBeamer{colors}
+
+%% Process the options
+\ProcessOptionsBeamer
+
+%% Required for color name definitions
+\RequirePackage{aaltologo}
+
+%% Required for the conditional formatting
+\RequirePackage{ifthen}
+
+%% Handout-specific definitions
+\mode*<handout>
+
+% Set Uncoated colors for handouts
+\AaltoLogoChangeColorMedia[Uncoated]
+
+%% Transparencies-specific definitions
+\mode*<trans>
+
+% Set Coated colors for transparencies
+\AaltoLogoChangeColorMedia[Coated]
+
+\mode<presentation>
+
+%% Beamer color definitions
+% Supplementary colors
+\ifthenelse{\equal{\AaltoBeamerColorTheme}{grayscale}}{%
+	\definecolor{aaltoBeamerColor01}{named}{aaltoGrayScale}%
+	\definecolor{aaltoBeamerColor02}{named}{aaltoBlack}%
+	\definecolor{aaltoBeamerColor0}{named}{aaltoGrayScale}%
+}{%
+	\definecolor{aaltoBeamerColor01}{named}{aaltoBlack}%
+	\definecolor{aaltoBeamerColor02}{named}{aaltoBlack}%
+	\ifthenelse{\equal{\AaltoBeamerColorTheme}{blackandwhite}}{%
+		\definecolor{aaltoBeamerColor0}{named}{aaltoBlack}%
+	}{%
+		\definecolor{aaltoBeamerColor0}{named}{aaltoGray}%
+	}%
+}
+% Colors in the color mode
+\definecolor{aaltoBeamerColor11}{named}{aaltoGreen}
+\definecolor{aaltoBeamerColor12}{named}{aaltoPurple}
+\definecolor{aaltoBeamerColor21}{named}{aaltoOrange}
+\definecolor{aaltoBeamerColor22}{named}{aaltoLightGreen}
+\definecolor{aaltoBeamerColor31}{named}{aaltoPurple}
+\definecolor{aaltoBeamerColor32}{named}{aaltoTurquoise}
+
+%% Color definitions
+% Alerted text
+\setbeamercolor{alerted text}{fg={aaltoBeamerColor\arabic{aaltologo_color}2}}
+% Bibliography entry author
+\setbeamercolor{bibliography entry author}{fg={black},bg={}}
+% Bibliography entry journal (doesn't work for some reason...)
+\setbeamercolor*{bibliography entry journal}{parent={bibliography entry author}}
+% Bibliography entry note
+\setbeamercolor{bibliography entry note}{fg={black},bg={}}
+% Bibliography item
+\setbeamercolor{bibliography item}{fg={black},bg={}}
+% Block title example
+\setbeamercolor{block title example}{fg={aaltoBeamerColor\arabic{aaltologo_color}1}}
+% Button
+\setbeamercolor{button}{fg={white},bg={aaltoBeamerColor\arabic{aaltologo_color}1}}
+% Button border
+\setbeamercolor{button border}{fg={aaltoBeamerColor\arabic{aaltologo_color}1},bg={white}}
+% Footline
+\setbeamercolor{footline}{fg={aaltoBeamerColor0}}
+% Item
+\setbeamercolor{item}{fg={aaltoBeamerColor\arabic{aaltologo_color}1}}
+% Normal text
+\setbeamercolor{normal text}{bg={},fg={black}}
+% QED symbol
+\setbeamercolor{qed symbol}{fg={black}}
+% Part page
+\setbeamercolor{part page}{fg={white},bg={aaltoBeamerColor\arabic{aaltologo_color}1}}
+% Sidebar
+\setbeamercolor{sidebar}{bg={}}
+% Section in sidebar
+\setbeamercolor{section in sidebar}{fg={white},bg={aaltoBeamerColor\arabic{aaltologo_color}1}}
+% Section in sidebar shaded 
+\setbeamercolor{section in sidebar shaded}{fg={aaltoBeamerColor0},bg={}}
+% Section in toc
+\setbeamercolor{section in toc}{fg={black},bg={}}
+% Section in toc shaded
+\setbeamercolor{section in toc shaded}{fg={aaltoBeamerColor0},bg={}}
+% Subsection in toc shaded
+\setbeamercolor{subsection in toc shaded}{fg={aaltoBeamerColor0},bg={}}
+% Subsubsection in toc shaded
+\setbeamercolor{subsubsection in toc shaded}{fg={aaltoBeamerColor0},bg={}}
+% Subsection in sidebar
+\setbeamercolor{subsection in sidebar}{fg={white},bg={aaltoBeamerColor\arabic{aaltologo_color}1}}
+% Subsection in sidebar shaded
+\setbeamercolor{subsection in sidebar shaded}{fg={aaltoBeamerColor0},bg={}}
+% Structure
+\setbeamercolor{structure}{fg={aaltoBeamerColor\arabic{aaltologo_color}1}}
+% Titlelike
+\setbeamercolor{titlelike}{bg={},fg={aaltoBeamerColor\arabic{aaltologo_color}1}}
+% Title page
+\setbeamercolor{title page}{fg={white},bg={aaltoBeamerColor\arabic{aaltologo_color}1}}%
+
+\mode<all>
+
+%% Randomize the logo in the beginning of the document
+\AtBeginDocument{%
+	% Check which version of the aaltologo package is used
+	\ifthenelse{\isundefined{\AaltoLogoVersion}}{% Test a command that is introduced in version 1.2 of the package
+		% Ye olde version. Randomize.
+		\ifthenelse{\equal{\AaltoBeamerColorTheme}{colors}}{%
+			% Randomize both color and mark
+			\AaltoLogoRandomize%
+		}{%
+			% Randomize only mark
+			\AaltoLogoRandomize[black]%
+		}%
+	}{%
+		% Newy vers, yo! No need to randomize.
+	}%
+}

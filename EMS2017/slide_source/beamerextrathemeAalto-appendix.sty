@@ -1,0 +1,84 @@
+%% beamerextrathemeAalto-appendix.sty version 1.0-prerelease
+%% Additional definitions for the appendix to be used in the Aalto University Beamer themes
+%% ---
+%% Copyright:
+%% Aalto University Marketing and Communications
+%% visu(a)aaltouniversity.fi
+%%
+%% Created and maintained by:
+%% Jussi Pekonen
+%% Department of Signal Processing and Acoustics
+%% Aalto University School of Electrical Engineering
+%%
+%% URL: https://wiki.aalto.fi/display/aaltolatex/
+%% ---
+%% LICENSE
+%% The additional definitions for appendices for the Aalto University Beamer themes has been published under the Creative Commons
+%% Attribution license (\url{http://creativecommons.org/licenses/by/1.0/}). This means that you can use the theme freely in your own
+%% documents and Beamer themes.
+%% ---
+%% Updated 2011/11/09
+
+\mode<presentation>
+
+%% Redefine \appendix and \inserttotalframenumber
+% Adapted from http://www-ljk.imag.fr/membres/Jerome.Lelong/latex/appendixnumberbeamer.sty
+\makeatletter
+\let\AaltoBeamerAppendixTotalFrameNumber1
+\def\AaltoBeamerPresentationTotalFrameNumber{-1}
+\def\appendix{%
+	\edef\AaltoBeamerPresentationTotalFrameNumber{\theframenumber}%
+	\immediate\write\@auxout{\string\global\string\@namedef{AaltoBeamerPresentationTotalFrameNumber}{\AaltoBeamerPresentationTotalFrameNumber}}%
+	\setcounter{framenumber}{0}%
+	\def\inserttotalframenumber{\AaltoBeamerAppendixTotalFrameNumber}%
+	\def\insertframenumber{\appendixname-\arabic{framenumber}}%
+	\setbeamertemplate{Aalto part page}{%
+		\ifthenelse{\isundefined{\AaltoBeamerVaryTheme}}{%
+			% The Aalto University outer theme is not used
+		}{%
+			% The Aalto University outer theme is used, forced logo color change
+			\usebeamertemplate{Aalto logo randomization template}%
+		}%
+		\gdef\AaltoBeamerPartPage{true}%
+		\setboolean{AaltoBeamerPartPage}{true}%
+		\vspace*{\AaltoBeamerPartVOffset}%
+		\hspace*{\AaltoBeamerPartHOffset}%
+		\begin{beamercolorbox}[left,sep={5pt}]{part page}%
+			\setlength{\linewidth}{\textwidth}%
+			\addtolength{\linewidth}{-10pt}%
+			\begin{minipage}[t][\AaltoBeamerPartBoxHeight]{\linewidth}%
+				\flushleft%
+				\insertpart%
+				\vskip0pt%
+				\rule{\linewidth}{2pt}%
+				\tableofcontents%
+				\vfill\null%
+			\end{minipage}%
+			\setlength{\linewidth}{\textwidth}%
+		\end{beamercolorbox}%
+	}%
+	\setboolean{AaltoBeamerPartContents}{false}%
+	\def\insertpartnumber{0}%
+	{%
+	\setbeamercolor{section in toc}{fg={white},bg={}}%
+	\setbeamercolor{subsection in toc}{fg={white},bg={}}%
+	\setbeamercolor{subsubsection in toc}{fg={white},bg={}}%
+	\part{\appendixname}%
+	}%
+}
+\AtEndDocument{%
+	\edef\AaltoBeamerAppendixFrameCount{\theframenumber}%
+	\ifnum\AaltoBeamerPresentationTotalFrameNumber>0%
+	\immediate\write\@auxout{\string\global\string\@namedef{AaltoBeamerAppendixTotalFrameNumber}{\AaltoBeamerAppendixFrameCount}}%
+	\immediate\write\@auxout{\string\global\string\@namedef{inserttotalframenumber}{\AaltoBeamerPresentationTotalFrameNumber}}%
+	\immediate\write\@auxout{\string\@writefile{nav}{\noexpand \headcommand {%
+		\noexpand \def\noexpand \inserttotalframenumber{\AaltoBeamerPresentationTotalFrameNumber}}}}%
+	\immediate\write\@auxout{\string\@writefile{nav}{\noexpand \headcommand {%
+		\noexpand \def\noexpand \appendixtotalframenumber{\AaltoBeamerAppendixFrameCount}}}}%
+	\else%
+	\fi%
+}
+\makeatother
+
+\mode<all>
+

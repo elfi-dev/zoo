@@ -1,0 +1,67 @@
+%% beamerinnerthemeAalto.sty version 1.0-prerelease
+%% Aalto University Beamer inner theme wrapper theme
+%% ---
+%% Copyright:
+%% Aalto University Marketing and Communications
+%% visu(a)aaltouniversity.fi
+%%
+%% Created and maintained by:
+%% Jussi Pekonen
+%% Department of Signal Processing and Acoustics
+%% Aalto University School of Electrical Engineering
+%%
+%% URL: https://wiki.aalto.fi/display/aaltolatex/
+%% ---
+%% LICENSE
+%% The Aalto University Beamer inner theme wrapper theme has been published under the Creative Commons Attribution license
+%% (\url{http://creativecommons.org/licenses/by/1.0/}). This means that you can use the theme freely in your own documents.
+%%
+%% If you have an inner theme that has been approved by the Aalto University Marketing and Communications, contact the maintainer(s) to
+%% have your inner theme to be included to the interface this wrapper theme provides.
+%% ---
+%% Updated 2011/11/09
+
+%% Declare theme options
+% Option 'default', for using the default inner theme
+\DeclareOptionBeamer{default}{%
+	\gdef\AaltoBeamerInnerTheme{default}%
+}
+% Option 'sidebar', for using the sidebar inner theme
+\DeclareOptionBeamer{sidebar}{%
+	\gdef\AaltoBeamerInnerTheme{sidebar}%
+}
+% Option 'outline', an alias for the option 'sidebar'
+\DeclareOptionBeamer{outline}{%
+	\gdef\AaltoBeamerInnerTheme{sidebar}%
+}
+% Option 'showpartcontents', for the default inner theme
+\DeclareOptionBeamer{showpartcontents}{%
+	\PassOptionsToPackage{showpartcontents=#1}{beamerinnerthemeAalto-default}%
+}
+% Option 'hidesubsections', for the default inner theme
+\DeclareOptionBeamer{hidesubsections}{%
+	\PassOptionsToPackage{hidesubsections}{beamerinnerthemeAalto-default}%
+}
+
+%% Default options
+\ExecuteOptionsBeamer{default}
+
+%% Process the options
+\ProcessOptionsBeamer
+
+\mode<presentation>
+
+%% Required for the conditionals
+\RequirePackage{ifthen}
+
+%% Set the inner theme
+% Default theme
+\ifthenelse{\equal{\AaltoBeamerInnerTheme}{default}}{%
+	\useinnertheme{Aalto-default}%
+}{}
+% Sidebar theme
+\ifthenelse{\equal{\AaltoBeamerInnerTheme}{sidebar}}{%
+	\useinnertheme{Aalto-sidebar}%
+}{}
+
+\mode<all>

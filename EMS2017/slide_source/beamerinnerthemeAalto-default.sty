@@ -1,0 +1,75 @@
+%% beamerinnerthemeAalto-default.sty version 1.0-prerelease
+%% Default Aalto University Beamer inner theme
+%% ---
+%% Copyright:
+%% Aalto University Marketing and Communications
+%% visu(a)aaltouniversity.fi
+%%
+%% Created and maintained by:
+%% Jussi Pekonen
+%% Department of Signal Processing and Acoustics
+%% Aalto University School of Electrical Engineering
+%%
+%% URL: https://wiki.aalto.fi/display/aaltolatex/
+%% ---
+%% LICENSE
+%% The default Aalto University Beamer inner theme has been published under the Creative Commons Attribution license
+%% (\url{http://creativecommons.org/licenses/by/1.0/}). This means that you can use the theme freely in your own documents and Beamer
+%% themes.
+%%
+%% However, if you want your Beamer theme to have an offical Aalto University Beamer theme status, it \emph{needs} to be approved by the
+%% Aalto University Marketing and Communications. Moreover, you \emph{are not allowed} to write your own default inner theme definitions for
+%% Aalto University. However, if you want a certain definition to be included to the default theme, contact the maintainer(s) in order to have your
+%% definition proposition included.
+%% ---
+%% Updated 2011/11/09
+
+%% Declare theme options
+% Option 'showpartcontents', for showing the automatic display of the table of contents when parts are used
+\DeclareOptionBeamer{showpartcontents}{%
+	\PassOptionsToPackage{showpartcontents=#1}{beamerinnerthemeAalto-base}%
+}
+% Option 'hidesubsections', for suppressing the subsections in parts' table of contents
+\DeclareOptionBeamer{hidesubsections}{%
+	\PassOptionsToPackage{hidesubsections}{beamerinnerthemeAalto-base}%
+}
+
+%% Process the options
+\ProcessOptionsBeamer
+
+\mode<presentation>
+
+%% Required fundamental definitions
+\RequirePackage{beamerinnerthemeAalto-base}
+
+%% Set the lengths
+% Set the vertical offset of the frame title
+\setlength{\AaltoBeamerFrameTitleVOffset}{13pt}%
+% Set the vertical offset of the part title box template
+\setlength{\AaltoBeamerPartVOffset}{8pt}%
+% Set the horizontal offset of the part title box template
+\setlength{\AaltoBeamerPartHOffset}{0pt}%
+% Set the vertical offset of the parts' table of contents template
+\setlength{\AaltoBeamerPartContentsVOffset}{-12.75pt}%
+
+%% Modified Beamer template definitions
+% Automatic advertisement of the current part
+\makeatletter
+\AtBeginPart{%
+	\def\AaltoBeamerUsesParts{1}%
+	\addtocontents{toc}{\protect\beamer@partintoc{\the\c@part}{\beamer@partnameshort}{\the\c@page}}%
+	\begin{frame}[t,allowframebreaks]%
+		\partpage%
+		\ifthenelse{\boolean{AaltoBeamerPartContents}}{%
+			% Table of Contents of the current part automatically shown
+			\clearpage
+			\usebeamertemplate{Aalto part contents frametitle}%
+			\usebeamertemplate{Aalto part contents}%
+		}{%
+			% Table of Contents of the current part not shown
+		}%
+	\end{frame}
+}
+\makeatother
+
+\mode<all>
