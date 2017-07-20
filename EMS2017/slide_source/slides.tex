@@ -93,9 +93,45 @@ Samuel Kaski (Aalto)
 \subsection{What is ABC}
 
 \begin{frame}
-\frametitle{What is ABC}
+\frametitle{Likelihood function}
+Likelihood function is central in model-based inference\\
+\medskip
+In many cases, inference consists of just finding the maximum of the likelihood function (ML point estimate)\\
+\medskip
+However, with many complex models either:
+\begin{itemize}
+\item No explicit likelihood function exists
+\item Evaluating the likelihood function is infeasible
+\end{itemize}
+\medskip
+Examples include:
+\begin{itemize}
+\item Climate models
+\item Biological models
+\item Cognitive models
+\end{itemize}
 \end{frame}
 
+\begin{frame}
+\frametitle{What is Approximate Bayesian Computation}
+ABC is a set of inference methods that bypass the evaluation of the likelihood function\\
+\medskip
+The core idea is to repeatedly simulate predictions from the model and evaluate their discrepancy with the observation data\\
+\medskip
+\textbf{Intuition:} If parameters lead to predictions that match with the observation data, then these parameters have high likelihood\\
+\medskip
+ABC methods are based on Bayesian statistics, and with some assumptions we can closely approximate the true likelihood
+\end{frame}
+
+\begin{frame}
+\frametitle{ABC Visual Demonstration}
+\vspace{-1em}
+\begin{figure}[ht]
+\centerline{\includegraphics[width=\columnwidth]{img/abc1.png}}
+\end{figure}
+\vspace{-1em}
+\tiny{Figure adapted from: Sunnaker et al., ABC, 2013, \url{https://doi.org/10.1371/journal.pcbi.1002803}}
+\end{frame}
 
 \subsection{Why use ABC}
 
