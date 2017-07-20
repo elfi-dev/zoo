@@ -1,3 +1,4 @@
 jupyter>=1.0.0
-elfi==0.6.0
+elfi==0.6.1
 RISE>=5.0.0
+graphviz>=0.8

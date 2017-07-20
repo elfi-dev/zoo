@@ -7,6 +7,10 @@ Example:
  source .venv/bin/activate
  pip install -r requirements.txt
 
+You also need to have the 'graphviz' system-level package installed if you want to
+visualize the DAGs.
+ apt-get install graphviz
+
 For RISE (https://github.com/damianavila/RISE) with virtualenv, also run:
  jupyter-nbextension install rise --py --sys-prefix
  jupyter-nbextension enable rise --py --sys-prefix
