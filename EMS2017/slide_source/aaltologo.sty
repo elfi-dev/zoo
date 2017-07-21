@@ -4575,7 +4575,8 @@ and (25.4,11.3) .. (27.4,12.4) .. controls (28.8,13.1) and (29.4,13.8) ..
 \DeclareRobustCommand{\AaltoLogoRandomize}[1][rby]{%
 	\reinitrand[seed=0,last=3]%
 	\ifthenelse{\equal{#1}{rby}}{
-		\rand\whiledo{\equal{\arabic{rand}}{\arabic{aaltologo_color}}}{\rand}\setcounter{aaltologo_color}{\arabic{rand}}%
+		%\rand\whiledo{\equal{\arabic{rand}}{\arabic{aaltologo_color}}}{\rand}\setcounter{aaltologo_color}{\arabic{rand}}%
+		\setcounter{aaltologo_color}{1}%
 		\ifthenelse{\equal{\arabic{aaltologo_color}}{1}}{%
 			\gdef\AaltoLogoColor{aaltoRed}%
 		}{}%
@@ -4589,7 +4590,8 @@ and (25.4,11.3) .. (27.4,12.4) .. controls (28.8,13.1) and (29.4,13.8) ..
 		\setcounter{aaltologo_color}{0}%
 		\gdef\AaltoLogoColor{#1}
 	}%
-	\rand\whiledo{\equal{\arabic{rand}}{\arabic{aaltologo_mark}}}{\rand}\setcounter{aaltologo_mark}{\arabic{rand}}%
+	%\rand\whiledo{\equal{\arabic{rand}}{\arabic{aaltologo_mark}}}{\rand}\setcounter{aaltologo_mark}{\arabic{rand}}%
+	\setcounter{aaltologo_color}{1}%
 	\ifthenelse{\equal{\arabic{aaltologo_mark}}{1}}{%
 		\gdef\AaltoLogoMark{?}%
 	}{}%
