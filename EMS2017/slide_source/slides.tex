@@ -124,26 +124,63 @@ ABC methods are based on Bayesian statistics, and with some assumptions we can c
 \end{frame}
 
 \begin{frame}
-\frametitle{ABC Visual Demonstration}
+\frametitle{ABC Visual Demonstration 1}
 \vspace{-1em}
 \begin{figure}[ht]
 \centerline{\includegraphics[width=\columnwidth]{img/abc1.png}}
 \end{figure}
 \vspace{-1em}
-\tiny{Figure adapted from: Sunnaker et al., ABC, 2013, \url{https://doi.org/10.1371/journal.pcbi.1002803}}
+\tiny{Figure adapted from: Sunn{\aa}ker et al., 2013, \url{https://doi.org/10.1371/journal.pcbi.1002803}}
 \end{frame}
-
-\subsection{Why use ABC}
 
 \begin{frame}
-\frametitle{Why use ABC}
+\frametitle{ABC Design Parameters}
+What one needs to choose to use ABC:
+\begin{itemize}
+\item Discrepancy function: $\delta$(observation, prediction) $\rightarrow$ [0, $\infty$)
+\item Discrepancy threshold: $\varepsilon \in$ [0, $\infty$)
+\end{itemize}
+\medskip
+Choosing the discrepancy function is analogous to choosing a loss function: no perfect choice but some are more justified than others\\
+\medskip
+Threshold can even be chosen post-sampling if all samples can be stored in memory
 \end{frame}
 
-\subsection{Examples of ABC}
-
+\newcommand{\filmslide}[1]{
 \begin{frame}
-\frametitle{Examples of ABC}
+ \frametitle{ABC Visual Demonstration 2}
+ \begin{figure}[ht]
+ \begin{center}
+ \includegraphics[width=\textwidth]{./film/#1.png}
+ \end{center}
+ \end{figure}
+ \bigskip
+ \tiny{From (slides): Kangasr\"a\"asi\"o et al., 2017, \url{http://dl.acm.org/citation.cfm?id=3025576}}
 \end{frame}
+}
+
+\filmslide{01}
+\filmslide{02}
+\filmslide{03}
+\filmslide{04}
+\filmslide{05}
+\filmslide{06}
+\filmslide{07}
+\filmslide{08}
+\filmslide{09}
+\filmslide{10}
+\filmslide{11}
+\filmslide{12}
+\filmslide{13}
+\filmslide{14}
+\filmslide{15}
+\filmslide{16}
+\filmslide{17}
+\filmslide{18}
+\filmslide{19}
+\filmslide{20}
+\filmslide{21}
+\filmslide{22}
 
 %------------------------------------------------
 \section{ELFI Python Library}
