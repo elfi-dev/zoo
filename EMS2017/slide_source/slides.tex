@@ -123,6 +123,8 @@ The core idea is to repeatedly simulate predictions from the model and evaluate 
 ABC methods are based on Bayesian statistics, and with some assumptions we can closely approximate the true likelihood
 \end{frame}
 
+\subsection{Visual Demonstrations}
+
 \begin{frame}
 \frametitle{ABC Visual Demonstration 1}
 \vspace{-1em}
@@ -190,19 +192,39 @@ Threshold can even be chosen post-sampling if all samples can be stored in memor
 \subsection{What is ELFI}
 
 \begin{frame}
-\frametitle{What is ELFI}
+\frametitle{Engine for Likelihood Free Inference}
+ELFI is an open-source Python library that aims to make it easy for practicioners to apply ABC\\
+\medskip
+Main features of the library:
+\begin{itemize}
+\item Implementations of ABC algorithms
+\item Easy syntax for defining model structure
+\item Storage and re-use of results
+\item Reporting and diagnostics tools
+\end{itemize}
 \end{frame}
 
-\subsection{What features does ELFI have}
-
 \begin{frame}
-\frametitle{What features does ELFI have}
+\frametitle{ELFI for Developers}
+ELFI aims to also become a platform where implementations of new methods can be easily published\\
+\medskip
+For developers ELFI offers:
+\begin{itemize}
+\item Modular design of the library
+\item Well-defined API for implementing own modules
+\item Development and maintenance of the library (by Aalto PML)
+\item Growing user community
+\end{itemize}
 \end{frame}
 
 \subsection{Demonstration}
 
 \begin{frame}
 \frametitle{Demonstration}
+Live demonstration of the main features of ELFI\\
+\medskip
+Slides and the demo are available at:\\
+\url{github.com/elfi-dev/zoo} (branch \textbf{ems2017})
 \end{frame}
 
 \end{document}
