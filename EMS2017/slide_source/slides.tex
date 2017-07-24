@@ -68,10 +68,14 @@ Jarno Lintusaari (Aalto),
 Henri Vuollekoski (Aalto),
 Kusti Skyt\'en (Aalto),
 Marko J\"arvenp\"a\"a (Aalto),
-Michael Gutmann (University of Edinburgh),
+Michael Gutmann (University of Edinburgh),\\
 Aki Vehtari (Aalto),
 Jukka Corander (University of Oslo),
-Samuel Kaski (Aalto)
+Samuel Kaski (Aalto)\\
+\medskip
+European Meeting of Statisticians 2017 Helsinki\\
+\medskip
+Slides and the demo are available at: \url{github.com/elfi-dev/zoo} (branch \textbf{ems2017})
 }
 \date{July 25th, 2017}
 
@@ -96,14 +100,14 @@ Samuel Kaski (Aalto)
 \frametitle{Likelihood function}
 Likelihood function is central in model-based inference\\
 \medskip
-In many cases, inference consists of just finding the maximum of the likelihood function (ML point estimate)\\
-\medskip
+In many cases, inference might consist of just finding the maximum of the likelihood function (ML point estimate)\\
+\medskip\pause
 However, with many complex models either:
 \begin{itemize}
 \item No explicit likelihood function exists
-\item Evaluating the likelihood function is infeasible
+\item Evaluating the likelihood function is very expensive
 \end{itemize}
-\medskip
+\medskip\pause
 Examples include:
 \begin{itemize}
 \item Climate models
@@ -116,11 +120,28 @@ Examples include:
 \frametitle{What is Approximate Bayesian Computation}
 ABC is a set of inference methods that bypass the evaluation of the likelihood function\\
 \medskip
-The core idea is to repeatedly simulate predictions from the model and evaluate their discrepancy with the observation data\\
-\medskip
+The core idea in ABC is to repeatedly simulate predictions from the model and evaluate their discrepancy with the observation data\\
+\medskip\pause
 \textbf{Intuition:} If parameters lead to predictions that match with the observation data, then these parameters have high likelihood\\
-\medskip
+\medskip\pause
 ABC methods are based on Bayesian statistics, and with some assumptions we can closely approximate the true likelihood
+\end{frame}
+
+\begin{frame}
+\frametitle{ABC Math Background}
+Bayes' Rule says: $P(\theta | D) \propto P(D|\theta)P(\theta)$\\
+\medskip
+Thus, we can always estimate $P(\theta|D)$ with the rejection scheme:\\
+\begin{itemize}
+\item Draw $\theta \sim P(\theta)$ and $D \sim P(D|\theta)$
+\item If $D = D_{obs}$, accept $\theta$ as a sample from $P(\theta | D_{obs})$
+\end{itemize}
+\medskip\pause
+\textbf{Problem:} Is most cases our acceptance rate is nearly 0 as we require that $D = D_{obs}$ precisely\\
+\medskip\pause
+\textbf{Approx:} Accept samples when discrepancy $\delta(D, D_{obs}) < \varepsilon$, thus yielding samples from $P(\theta | \delta(D, D_{obs}) < \varepsilon)$\\
+\medskip\pause
+In general, this approach makes sense when evaluating the generative model is easier than evaluating the likelihood
 \end{frame}
 
 \subsection{Visual Demonstrations}
@@ -139,8 +160,8 @@ ABC methods are based on Bayesian statistics, and with some assumptions we can c
 \frametitle{ABC Design Parameters}
 What one needs to choose to use ABC:
 \begin{itemize}
-\item Discrepancy function: $\delta$(observation, prediction) $\rightarrow$ [0, $\infty$)
-\item Discrepancy threshold: $\varepsilon \in$ [0, $\infty$)
+\item Discrepancy function: $\delta(D_{sim}, D_{obs}) \rightarrow [0, \infty)$
+\item Discrepancy threshold: $\varepsilon \in [0, \infty)$
 \end{itemize}
 \medskip
 Choosing the discrepancy function is analogous to choosing a loss function: no perfect choice but some are more justified than others\\
@@ -158,7 +179,7 @@ Threshold can even be chosen post-sampling if all samples can be stored in memor
  \end{figure}
  \bigskip
  \tiny{From (slides): Kangasr\"a\"asi\"o et al., 2017, \url{http://dl.acm.org/citation.cfm?id=3025576}}\\
- \tiny{Algorithm: Gutmann \& Corander, 2016, \url{http://jmlr.org/papers/v17/15-017.html}}
+ \tiny{Algorithm (BOLFI): Gutmann \& Corander, 2016, \url{http://jmlr.org/papers/v17/15-017.html}}
 \end{frame}
 }
 
@@ -193,7 +214,7 @@ Threshold can even be chosen post-sampling if all samples can be stored in memor
 
 \begin{frame}
 \frametitle{Engine for Likelihood Free Inference}
-ELFI is an open-source Python library that aims to make it easy for practicioners to apply ABC\\
+ELFI is an open-source Python library that aims to make it easy for \textbf{practicioners} to apply ABC\\
 \medskip
 Main features of the library:
 \begin{itemize}
@@ -208,7 +229,7 @@ Main features of the library:
 \frametitle{ELFI for Developers}
 ELFI aims to also become a platform where implementations of new methods can be easily published\\
 \medskip
-For developers ELFI offers:
+For \textbf{developers} ELFI offers:
 \begin{itemize}
 \item Modular design of the library
 \item Well-defined API for implementing own modules
