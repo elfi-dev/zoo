@@ -1,0 +1,41 @@
+import pytest  # noqa: F401; pylint: disable=unused-variable
+
+import numpy as np
+
+import lfire
+from lfire.models import arch
+
+from elfi.methods.parameter_inference import ParameterInference
+from elfi.methods.results import ParameterInferenceResult
+
+
+def _create_grid(n):
+    """Creates a grid for the ARCH(1) model parameters.
+
+    Parameters
+    ----------
+    n: int
+        Number of points in a grid for each parameter.
+
+    Returns
+    -------
+    np.ndarray (rows x columns) = (number of points in the grid x number of parameters)
+
+    """
+    t1, t2 = np.linspace(-1, 1, n), np.linspace(0, 1, n)
+    tt1, tt2 = np.meshgrid(t1, t2)
+    return np.c_[tt1.ravel(), tt2.ravel()]
+
+
+def test_lfire():
+    """Tests LFIRE class."""
+    arch_model = arch.get_model()
+
+    lfire_method = lfire.LFIRE(model=arch_model, params_grid=_create_grid(2), batch_size=10)
+
+    # check instance
+    isinstance(lfire, ParameterInference)
+
+    # run inference and check results instance
+    lfire_results = lfire_method.infer()
+    isinstance(lfire_results, ParameterInferenceResult)

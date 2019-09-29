@@ -1,0 +1,5 @@
+elfi==0.7.4
+graphviz==0.13
+glmnet==2.1.1
+flake8==3.7.8
+pytest==5.1.2

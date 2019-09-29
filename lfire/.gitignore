@@ -1,0 +1,21 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+
+# Jupyter notebook checkpoints
+.ipynb_checkpoints
+
+# Pytest
+.pytest_cache
+
+# Mac OS X related stuff
+.DS_Store
+
+# VS Code
+.vscode
