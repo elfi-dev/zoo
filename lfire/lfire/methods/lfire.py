@@ -1,4 +1,8 @@
 import logging
+import pickle
+import os
+import json
+import warnings
 
 from multiprocessing import cpu_count
 from collections import OrderedDict
@@ -66,8 +70,9 @@ class LFIRE(ParameterInference):
         n_batches = self.params_grid.shape[0]
         self.state['posterior'] = np.empty(n_batches)
         self.state['lambda'] = np.empty(n_batches)
-        self.state['coef'] = np.empty((n_batches, len(self.summary_names)))
+        self.state['coef'] = np.empty((n_batches, self.observed.shape[1]))
         self.state['intercept'] = np.empty(n_batches)
+        self.state['infinity'] = {parameter_name: [] for parameter_name in self.parameter_names}
         for parameter_name in self.parameter_names:
             self.state[parameter_name] = np.empty(n_batches)
 
@@ -104,7 +109,7 @@ class LFIRE(ParameterInference):
 
         # Parse likelihood values
         likelihood = [batch[summary_name] for summary_name in self.summary_names]
-        likelihood = np.array(likelihood).T
+        likelihood = np.column_stack(likelihood)
 
         # Create training data
         X = np.vstack((likelihood, self.marginal))
@@ -124,6 +129,16 @@ class LFIRE(ParameterInference):
 
         # Posterior value
         posterior_value = joint_prior_value * likelihood_value
+
+        # Check if posterior value is non-finite
+        if np.isinf(posterior_value):
+            params = self.params_grid[batch_index]
+            warnings.warn(f'Posterior value is not finite for parameters \
+                          {self.parameter_names} = {params} and thus will be replaced with zero!',
+                          RuntimeWarning)
+            posterior_value = 0
+            for i, parameter_name in enumerate(self.parameter_names):
+                self.state['infinity'][parameter_name] += [params[i]]
 
         # Update state dictionary
         self.state['posterior'][batch_index] = posterior_value
@@ -199,7 +214,7 @@ class LFIRE(ParameterInference):
         """
         batch = self.model.generate(self.batch_size)
         marginal = [batch[summary_name] for summary_name in self.summary_names]
-        marginal = np.array(marginal).T
+        marginal = np.column_stack(marginal)
         return marginal
 
     def _get_summary_names(self):
@@ -225,7 +240,7 @@ class LFIRE(ParameterInference):
 
         """
         observed_ss = [self.model[summary_name].observed for summary_name in self.summary_names]
-        observed_ss = np.array(observed_ss).T
+        observed_ss = np.column_stack(observed_ss)
         return observed_ss
 
     def _resolve_logreg_config(self, logreg_config, parallel_cv):
@@ -355,7 +370,7 @@ class LFIREPosterior(ParameterInferenceResult):
 
         """
         vals = self._posterior.reshape(-1, 1) * self._params_grid
-        pos_means = np.sum(vals, axis=0) / np.sum(vals)
+        pos_means = np.sum(vals, axis=0) / np.sum(self._posterior)
         return OrderedDict([(n, pos_means[i]) for i, n in enumerate(self.parameter_names)])
 
     @property
@@ -417,6 +432,18 @@ class LFIREPosterior(ParameterInferenceResult):
 
         """
         return np.array(list(self.marginals.values()))
+
+    @property
+    def infinity(self):
+        """Returns True if any posterior value is non-finite.
+
+        Returns
+        -------
+        bool
+
+        """
+        s = np.sum([len(v) for v in self.outputs['infinity'].values()])
+        return True if s > 0 else False
 
     def plot_marginals(self, selector=None, axes=None):
         """Visualizes the marginal posterior distributions for each parameter.
@@ -501,9 +528,34 @@ class LFIREPosterior(ParameterInferenceResult):
 
         return axes
 
-    def save(self):
-        """Saves inference results."""
-        raise NotImplementedError
+    def save(self, fname, path=None):
+        """Saves inference results in json or pickle file formats.
+
+        Parameters
+        ----------
+        fname: str
+            A filename that will be saved. The type is inferred from
+            extension ('json', 'pkl' or 'p').
+        path: str, optional
+            An absolute path to the folder, where inference results will be saved.
+            Default is the current working directory
+
+        """
+        kind = os.path.splitext(fname)[1][1:]
+        if kind not in ('p', 'pkl', 'json'):
+            raise OSError("Wrong file type format. Please use 'json', 'pkl' or 'p'.")
+
+        if path is None:
+            # get the absolute path
+            path = os.path.abspath(os.getcwd())
+
+        self._initialize_directory(path)
+        if kind in ('p', 'pkl'):
+            with open(path + '/' + fname, 'wb') as f:
+                pickle.dump(self, f, pickle.HIGHEST_PROTOCOL)
+        elif kind == 'json':
+            with open(path + '/' + fname, 'w') as f:
+                json.dump(self._parse_summary_dict(), f)
 
     def summary(self):
         """Prints a verbose summary of contained results."""
@@ -625,3 +677,28 @@ class LFIREPosterior(ParameterInferenceResult):
         s = 'Posterior means: '
         s += ', '.join([f'{k}: {v:.3g}' for k, v in self.posterior_means.items()])
         return s
+
+    def _parse_summary_dict(self):
+        """Parses the summary dictionary for saving.
+
+        Returns
+        -------
+        str
+
+        """
+        return OrderedDict([('n_sim', self.n_sim),
+                            ('map_estimates', self.map_estimates),
+                            ('posterior_means', self.posterior_means)])
+
+    def _initialize_directory(self, path):
+        """Creates a given directory if not exists.
+
+        Parameters
+        ----------
+        path: str
+
+        """
+        try:
+            os.mkdir(path)
+        except OSError:
+            pass
