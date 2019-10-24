@@ -24,7 +24,7 @@ logger = logging.getLogger(__name__)
 class LFIRE(ParameterInference):
     """Likelihood-Free Inference by Ratio Estimation (LFIRE).
 
-    For a describtion of the LFIRE, see e.g. Owen et al. 2018.
+    For a describtion of the LFIRE, see e.g. Thomas et al. 2018.
 
     References
     ----------
