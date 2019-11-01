@@ -2,8 +2,8 @@ import pytest  # noqa: F401; pylint: disable=unused-variable
 
 import numpy as np
 
-import lfire
-from lfire.models import arch
+import pylfire
+from pylfire.models import arch
 
 from elfi.methods.parameter_inference import ParameterInference
 from elfi.methods.results import ParameterInferenceResult
@@ -27,15 +27,16 @@ def _create_grid(n):
     return np.c_[tt1.ravel(), tt2.ravel()]
 
 
-def test_lfire():
-    """Tests LFIRE class."""
+def test_pylfire():
+    """Tests LFIRE and LFIREPosterior classes."""
     arch_model = arch.get_model()
 
-    lfire_method = lfire.LFIRE(model=arch_model, params_grid=_create_grid(2), batch_size=10)
+    lfire_method = pylfire.LFIRE(model=arch_model, params_grid=_create_grid(2), batch_size=10)
 
     # check instance
-    isinstance(lfire, ParameterInference)
+    assert isinstance(lfire_method, ParameterInference) and isinstance(lfire_method, pylfire.LFIRE)
 
     # run inference and check results instance
     lfire_results = lfire_method.infer()
-    isinstance(lfire_results, ParameterInferenceResult)
+    assert isinstance(lfire_results, ParameterInferenceResult) \
+        and isinstance(lfire_results, pylfire.LFIREPosterior)

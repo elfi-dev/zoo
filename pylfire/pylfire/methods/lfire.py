@@ -45,10 +45,14 @@ class LFIRE(ParameterInference):
             A grid over which posterior values are evaluated.
         marginal: np.ndarray, optional
             Marginal data.
+        logreg_config: dict, optional
+            A config dictionary for logistic regression.
         output_names: list, optional
             Names of the nodes whose outputs are included in the batches.
         parallel_cv: bool, optional
             Either cross-validation or elfi can be run in parallel.
+        batch_size: int, optional
+            A size of training data.
         kwargs:
             See InferenceMethod.
 

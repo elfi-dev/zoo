@@ -5,13 +5,13 @@ with open('requirements.txt', 'r') as f:
     requirements = f.read().splitlines()
 
 setup_config = {
-    'name': 'lfire',
+    'name': 'pylfire',
     'version': 0.1,
-    'packages': ['lfire'],
+    'packages': ['pylfire'],
     'install_requires': requirements,
     'author': 'Jan Kokko',
     'author_email': 'jan.kokko@helsinki.fi',
-    'url': 'https://github.com/elfi-dev/zoo/lfire',
+    'url': 'https://github.com/elfi-dev/zoo/pylfire',
     'licence': 'BSD'
 }
 

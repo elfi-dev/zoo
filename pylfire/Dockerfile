@@ -1,7 +1,7 @@
 FROM python:3.6.9-stretch
 
-WORKDIR /lfire
-ADD . /lfire
+WORKDIR /pylfire
+ADD . /pylfire
 
 RUN apt-get update && apt-get upgrade -y
 RUN apt-get install -y gfortran graphviz jupyter-notebook
