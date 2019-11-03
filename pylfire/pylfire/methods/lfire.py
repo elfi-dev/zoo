@@ -34,7 +34,8 @@ class LFIRE(ParameterInference):
     """
 
     def __init__(self, model, params_grid, marginal=None,
-                 logreg_config=None, output_names=None, parallel_cv=True, **kwargs):
+                 logreg_config=None, output_names=None, parallel_cv=True,
+                 seed_marginal=None, **kwargs):
         """Initializes LFIRE.
 
         Parameters
@@ -53,6 +54,8 @@ class LFIRE(ParameterInference):
             Either cross-validation or elfi can be run in parallel.
         batch_size: int, optional
             A size of training data.
+        seed_marginal: int, optional
+            Seed for marginal data generation.
         kwargs:
             See InferenceMethod.
 
@@ -64,7 +67,7 @@ class LFIRE(ParameterInference):
             raise NotImplementedError('Your model must have at least one Summary node.')
 
         self.params_grid = self._resolve_params_grid(params_grid)
-        self.marginal = self._resolve_marginal(marginal)
+        self.marginal = self._resolve_marginal(marginal, seed_marginal)
         self.observed = self._get_observed_summary_values()
         self.joint_prior = ModelPrior(self.model)
         self.logreg_config = self._resolve_logreg_config(logreg_config, parallel_cv)
@@ -186,12 +189,13 @@ class LFIRE(ParameterInference):
         else:
             raise TypeError('params_grid must be 2d numpy array.')
 
-    def _resolve_marginal(self, marginal):
+    def _resolve_marginal(self, marginal, seed_marginal=None):
         """Resolves marginal data.
 
         Parameters
         ----------
         marginal: np.ndarray
+        seed_marginal: int, optional
 
         Returns
         -------
@@ -199,7 +203,7 @@ class LFIRE(ParameterInference):
 
         """
         if marginal is None:
-            marginal = self._generate_marginal()
+            marginal = self._generate_marginal(seed_marginal)
             x, y = marginal.shape
             logger.info(f'New marginal data ({x} x {y}) are generated.')
             return marginal
@@ -208,15 +212,22 @@ class LFIRE(ParameterInference):
         else:
             raise TypeError('marginal must be 2d numpy array.')
 
-    def _generate_marginal(self):
+    def _generate_marginal(self, seed_marginal=None):
         """Generates marginal data.
+
+        Parameters
+        ----------
+        seed_marginal: int, optional
 
         Returns
         -------
         np.ndarray
 
         """
-        batch = self.model.generate(self.batch_size)
+        if seed_marginal is None:
+            batch = self.model.generate(self.batch_size)
+        else:
+            batch = self.model.generate(self.batch_size, seed=seed_marginal)
         marginal = [batch[summary_name] for summary_name in self.summary_names]
         marginal = np.column_stack(marginal)
         return marginal
