@@ -9,7 +9,7 @@ from collections import OrderedDict
 
 import numpy as np
 
-from glmnet import LogitNet
+from pylfire.classifiers.classifier import Classifier, LogisticRegression
 
 from elfi.client import set_client
 from elfi.methods.parameter_inference import ParameterInference
@@ -33,9 +33,8 @@ class LFIRE(ParameterInference):
 
     """
 
-    def __init__(self, model, params_grid, marginal=None,
-                 logreg_config=None, output_names=None, parallel_cv=True,
-                 seed_marginal=None, **kwargs):
+    def __init__(self, model, params_grid, marginal=None, classifier=None,
+                 output_names=None, seed_marginal=None, **kwargs):
         """Initializes LFIRE.
 
         Parameters
@@ -46,12 +45,10 @@ class LFIRE(ParameterInference):
             A grid over which posterior values are evaluated.
         marginal: np.ndarray, optional
             Marginal data.
-        logreg_config: dict, optional
-            A config dictionary for logistic regression.
+        classifier: str, optional
+            Classifier to be used. Default LogisticRegression.
         output_names: list, optional
             Names of the nodes whose outputs are included in the batches.
-        parallel_cv: bool, optional
-            Either cross-validation or elfi can be run in parallel.
         batch_size: int, optional
             A size of training data.
         seed_marginal: int, optional
@@ -70,15 +67,13 @@ class LFIRE(ParameterInference):
         self.marginal = self._resolve_marginal(marginal, seed_marginal)
         self.observed = self._get_observed_summary_values()
         self.joint_prior = ModelPrior(self.model)
-        self.logreg_config = self._resolve_logreg_config(logreg_config, parallel_cv)
+        self.classifier = self._resolve_classifier(classifier)
 
-        self._resolve_elfi_client(parallel_cv)
+        self._resolve_elfi_client(self.classifier.parallel_cv)
 
         n_batches = self.params_grid.shape[0]
         self.state['posterior'] = np.empty(n_batches)
-        self.state['lambda'] = np.empty(n_batches)
-        self.state['coef'] = np.empty((n_batches, self.observed.shape[1]))
-        self.state['intercept'] = np.empty(n_batches)
+        self.state['cls'] = [{} for _ in range(n_batches)]
         self.state['infinity'] = {parameter_name: [] for parameter_name in self.parameter_names}
         for parameter_name in self.parameter_names:
             self.state[parameter_name] = np.empty(n_batches)
@@ -122,12 +117,11 @@ class LFIRE(ParameterInference):
         X = np.vstack((likelihood, self.marginal))
         y = np.concatenate((np.ones(likelihood.shape[0]), -1 * np.ones(self.marginal.shape[0])))
 
-        # Logistic regression
-        m = LogitNet(**self.logreg_config)
-        m.fit(X, y)
+        # Classification
+        self.classifier.fit(X, y)
 
         # Likelihood value
-        log_likelihood_value = m.intercept_ + np.sum(np.multiply(m.coef_, self.observed))
+        log_likelihood_value = self.classifier.predict_log_likelihood_ratio(self.observed)
         likelihood_value = np.exp(log_likelihood_value)
 
         # Joint prior value
@@ -149,9 +143,7 @@ class LFIRE(ParameterInference):
 
         # Update state dictionary
         self.state['posterior'][batch_index] = posterior_value
-        self.state['lambda'][batch_index] = m.lambda_best_
-        self.state['coef'][batch_index, :] = m.coef_
-        self.state['intercept'][batch_index] = m.intercept_
+        self.state['cls'][batch_index]=self.classifier.attributes
         for parameter_name in self.parameter_names:
             self.state[parameter_name][batch_index] = batch[parameter_name]
 
@@ -258,45 +250,15 @@ class LFIRE(ParameterInference):
         observed_ss = np.column_stack(observed_ss)
         return observed_ss
 
-    def _resolve_logreg_config(self, logreg_config, parallel_cv):
-        """Resolves logistic regression config.
 
-        Parameters
-        ----------
-        logreg_config: dict
-            Config dictionary for logistic regression.
-        parallel_cv: bool
-
-        Returns
-        -------
-        dict
-
-        """
-        if isinstance(logreg_config, dict):
-            # TODO: check valid kwargs
-            return logreg_config
+    def _resolve_classifier(self, classifier):
+        """Resolves classifier."""
+        if classifier is None:
+            return LogisticRegression()
+        elif isinstance(classifier, Classifier):
+            return classifier
         else:
-            return self._get_default_logreg_config(parallel_cv)
-
-    def _get_default_logreg_config(self, parallel_cv):
-        """Creates logistic regression config.
-
-        Parameters
-        ----------
-        parallel_cv: bool
-
-        Returns
-        -------
-        dict
-
-        """
-        logreg_config = {
-            'alpha': 1,
-            'n_splits': 10,
-            'n_jobs': cpu_count() if parallel_cv else 1,
-            'cut_point': 0
-        }
-        return logreg_config
+            raise ValueError('classifier must be an instance of Classifier.')
 
     def _resolve_elfi_client(self, parallel_cv):
         """Resolves elfi client. Either elfi or cross-validation can be run in parallel.
