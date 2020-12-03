@@ -3,6 +3,7 @@ import pickle
 import os
 import json
 import warnings
+import copy
 
 from multiprocessing import cpu_count
 from collections import OrderedDict
@@ -73,10 +74,14 @@ class LFIRE(ParameterInference):
 
         n_batches = self.params_grid.shape[0]
         self.state['posterior'] = np.empty(n_batches)
-        self.state['cls'] = [{} for _ in range(n_batches)]
         self.state['infinity'] = {parameter_name: [] for parameter_name in self.parameter_names}
         for parameter_name in self.parameter_names:
             self.state[parameter_name] = np.empty(n_batches)
+        for cls_parameter in self.classifier.parameter_names:
+            self.state[cls_parameter] = []
+
+        # separate precomputed data container
+        self.pre={'model': [], 'prior_value': np.array([])}
 
     def set_objective(self):
         """Sets objective for inference."""
@@ -91,11 +96,13 @@ class LFIRE(ParameterInference):
         LFIREPosterior
 
         """
+        current_state=copy.deepcopy(self.state)
         return LFIREPosterior(
             method_name='LFIRE',
-            outputs=self.state,
+            outputs=current_state, #self.state,
             parameter_names=self.parameter_names
         )
+
 
     def update(self, batch, batch_index):
         """Updates the inference state with a new batch and performs LFIRE.
@@ -143,9 +150,11 @@ class LFIRE(ParameterInference):
 
         # Update state dictionary
         self.state['posterior'][batch_index] = posterior_value
-        self.state['cls'][batch_index]=self.classifier.attributes
         for parameter_name in self.parameter_names:
             self.state[parameter_name][batch_index] = batch[parameter_name]
+        cls_params = self.classifier.attributes['parameters']
+        for cls_parameter in self.classifier.parameter_names:
+            self.state[cls_parameter].append(cls_params[cls_parameter])
 
     def prepare_new_batch(self, batch_index):
         """Prepares a new batch for elfi.
@@ -163,6 +172,78 @@ class LFIRE(ParameterInference):
         names = self.parameter_names
         batch = {p: params[i] for i, p in enumerate(names)}
         return batch
+
+    def save_models(self, filename):
+        """Save parameter grid and classifier parameters.
+
+        Parameters
+        ----------
+        filename: str
+
+        """
+        p={}
+        for parameter_name in self.parameter_names:
+            p[parameter_name] = self.state[parameter_name]
+        for cls_parameter in self.classifier.parameter_names:
+            p[cls_parameter] = self.state[cls_parameter]
+        np.savez(filename,**p)
+
+    def load_models(self, filename):
+        """Load parameter grid and classifier parameters.
+
+        Parameters
+        ----------
+        filename: str
+
+        """
+        p = np.load(filename)
+        for variable in p.files:
+            self.state[variable] = p[variable]
+        # TODO: check that provided param names match elfi model and values match params_grid or overwrite params_grid
+        # TODO: check that loaded classifier params match self.classifier.parameter names and expected dimensions
+        self.state['n_batches'] = self.state[self.parameter_names[0]].shape[0]
+
+    def prepare_posterior_evaluation(self):
+        """Precompute prior probabilities and initialise classifiers."""
+        # compute prior probabilities
+        self.pre['prior_value'] = self.joint_prior.pdf(self.params_grid)
+        # initialise classifiers
+        self.pre['model'] = []
+        for n in range(self.state['n_batches']):
+            params={param: self.state[param][n] for param in self.classifier.parameter_names}
+            model = self.classifier.load_model(params)
+            self.pre['model'].append(model)
+
+    def evaluate_posterior(self, observed, simulator_name=None):
+        """Evaluate posterior probabilities based on provided observations."""
+
+        # TODO: check that we have classifiers
+
+        # 1. convert observed data to sum stats
+        # TODO: check that the node simulator_name is simulator or maybe better: take simulator name from m.observed
+        if simulator_name is not None:
+            sums=self.model.generate(with_values={simulator_name: observed})
+            observed_ss = [sums[summary_name] for summary_name in self.summary_names]
+            observed_ss = np.column_stack(observed_ss)
+        else:
+            # note: this option may not be needed in case we assume that users want to input observations rather than summaries
+            observed_ss = observed
+        print(observed_ss)
+
+        # 2. calculate likelihood ratios and posterior probabilities
+
+        if len(self.pre['model']) < self.state['n_batches']:
+            self.prepare_posterior_evaluation()
+        # TODO: add option to calculate prior probabilities and set up classifiers on the loop here
+        for ii in range(self.state['n_batches']):
+            # load precomputed model
+            model = self.pre['model'][ii]
+            # evaluate likelihood ratio
+            ratio = self.classifier.predict_likelihood_ratio(observed_ss, model = model)
+            # calculate posterior value
+            self.state['posterior'][ii] = self.pre['prior_value'][ii] * ratio
+
+        return self.extract_result()
 
     def _resolve_params_grid(self, params_grid):
         """Resolves parameters grid.

@@ -25,7 +25,7 @@ class Classifier:
         """
         raise NotImplementedError
 
-    def predict_log_likelihood_ratio(self, X):
+    def predict_log_likelihood_ratio(self, X, model = None):
         """Predicts a log-likelihood ratio.
 
         Parameters
@@ -40,7 +40,7 @@ class Classifier:
         """
         raise NotImplementedError
 
-    def predict_likelihood_ratio(self, X):
+    def predict_likelihood_ratio(self, X, model = None):
         """Predicts a likelihood ratio.
 
         Parameters
@@ -53,7 +53,7 @@ class Classifier:
         np.ndarray
 
         """
-        return np.exp(self.predict_log_likelihood_ratio(X))
+        return np.exp(self.predict_log_likelihood_ratio(X, model=model))
 
     @property
     def attributes(self):
@@ -69,21 +69,27 @@ class Classifier:
 class LogisticRegression(Classifier):
     """Logistic regression classifier for ratio estimation."""
 
-    def __init__(self, config=None, parallel_cv=True, class_min=0):
+    def __init__(self, config=None, parallel_cv=True, class_min=0.005):
         """Initializes logistic regression classifier."""
         self.config = self._resolve_config(config, parallel_cv)
         self.model = LogitNet(**self.config)
         self.class_min = class_min
+        self.parameter_names=['intercept','coefficients']
 
     def fit(self, X, y):
         """Fits logistic regression classifier."""
         self._update_data_attributes(X, y)
         self.model.fit(X, y)
+        self.model_params = [self.model.intercept_, self.model.coef_]
 
-    def predict_log_likelihood_ratio(self, X):
+    def load_model(self, parameters):
+        return [parameters['intercept'], parameters['coefficients']]
+
+    def predict_log_likelihood_ratio(self, X, model = None):
         """Predicts the log-likelihood ratio."""
-        class_probs = np.maximum(self.model.predict_proba(X)[:, 1], self.class_min)
-        return np.log(class_probs / (1 - class_probs))
+        if model is None: model = self.model_params
+        log_ratio = model[0] + np.sum(np.multiply(model[1], X))
+        return np.maximum(log_ratio, np.log(self.class_min/(1-self.class_min)))
 
     @property
     def attributes(self):
@@ -124,38 +130,52 @@ class LogisticRegression(Classifier):
 class GPClassifier(Classifier):
     """Gaussian process classifier for ratio estimation."""
 
-    def __init__(self, kernel=None, mean_function=None, class_min=0):
+    def __init__(self, kernel=None, mean_function=None, class_min=0.005):
         """Initializes the Gaussian process classifier."""
         self.model = None
         self.kernel = kernel
         self.mean_function = mean_function
         self.class_min = class_min
+        self.parameter_names=['X','Y','param_array']
 
     def fit(self, X, y):
         """Fits the Gaussian process classifier."""
         self.model = self._initialize_model(X, y)
         self.model.optimize()
 
-    def predict_log_likelihood_ratio(self, X):
+    def load_model(self, params):
+        """Reconstructs a Gaussian process classifier."""
+        model = self._initialize_model(params['X'], params['Y'], initialize=False)
+        model.update_model(False)
+        model.initialize_parameter()
+        model[:] = params['param_array']
+        model.update_model(True)
+        return model
+
+    def predict_log_likelihood_ratio(self, X, model = None):
         """Predicts the log-likelihood ratio."""
-        class_probs = np.maximum(self.model.predict(X)[0], self.class_min)
+        if model is None: model = self.model
+        class_probs = np.maximum(model.predict(X)[0], self.class_min)
         return np.log(class_probs / (1 - class_probs))
 
     @property
     def attributes(self):
         """Returns attributes dictionary."""
         return {
-            'X': self.model.X,
-            'Y': self.model.Y,
-            'parameters': self.model.param_array.tolist()
+            'parameters': {
+                'X': self.model.X,
+                'Y': self.model.Y,
+                'param_array': self.model.param_array.tolist()
+            }
         }
 
     def _get_default_kernel(self, input_dim):
         """Returns the default kernel."""
         return RBF(input_dim, ARD=True)
 
-    def _initialize_model(self, X, y):
+    def _initialize_model(self, X, y, initialize=True):
         """Initializes the Gaussian process classifier."""
         kernel = self.kernel.copy() if self.kernel else self._get_default_kernel(X.shape[1])
         mean_function = self.mean_function.copy() if self.mean_function else self.mean_function
-        return GPClassification(X, y.reshape(-1, 1), kernel=kernel, mean_function=mean_function)
+        return GPClassification(X, y.reshape(-1, 1), kernel=kernel,
+                                mean_function=mean_function, initialize=initialize)
