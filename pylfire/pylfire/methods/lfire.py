@@ -35,7 +35,7 @@ class LFIRE(ParameterInference):
     """
 
     def __init__(self, model, params_grid, marginal=None, classifier=None,
-                 output_names=None, seed_marginal=None, **kwargs):
+                 output_names=None, seed_marginal=None, pre_filename=None, **kwargs):
         """Initializes LFIRE.
 
         Parameters
@@ -54,34 +54,42 @@ class LFIRE(ParameterInference):
             A size of training data.
         seed_marginal: int, optional
             Seed for marginal data generation.
+        pre_filename: str, optional
+            Precomputed classifier parameters file.
         kwargs:
             See InferenceMethod.
 
         """
         super(LFIRE, self).__init__(model, output_names, **kwargs)
 
+        # 1. parse model:
         self.summary_names = self._get_summary_names()
         if len(self.summary_names) == 0:
             raise NotImplementedError('Your model must have at least one Summary node.')
-
-        self.params_grid = self._resolve_params_grid(params_grid)
-        self.marginal = self._resolve_marginal(marginal, seed_marginal)
-        self.observed = self._get_observed_summary_values()
         self.joint_prior = ModelPrior(self.model)
+
+        # 2. LFIRE setup:
+        self.params_grid = self._resolve_params_grid(params_grid)
         self.classifier = self._resolve_classifier(classifier)
-
         self._resolve_elfi_client(self.classifier.parallel_cv)
-
         n_batches = self.params_grid.shape[0]
+
+       # 3. initialise results containers:
         self.state['posterior'] = np.empty(n_batches)
         self.state['infinity'] = {parameter_name: [] for parameter_name in self.parameter_names}
-        for parameter_name in self.parameter_names:
-            self.state[parameter_name] = np.empty(n_batches)
-        for cls_parameter in self.classifier.parameter_names:
-            self.state[cls_parameter] = []
-
-        # separate precomputed data container
+        # separate precomputed model container
         self.pre={'model': [], 'prior_value': np.array([])}
+
+        # 4. initialise or load approximate posterior model:
+        if pre_filename is None:
+            self.marginal = self._resolve_marginal(marginal, seed_marginal)
+            for parameter_name in self.parameter_names:
+                self.state[parameter_name] = np.empty(n_batches)
+            for cls_parameter in self.classifier.parameter_names:
+                    self.state[cls_parameter] = []
+        else:
+            self.load_models(pre_filename)
+
 
     def set_objective(self):
         """Sets objective for inference."""
@@ -96,10 +104,9 @@ class LFIRE(ParameterInference):
         LFIREPosterior
 
         """
-        current_state=copy.deepcopy(self.state)
         return LFIREPosterior(
             method_name='LFIRE',
-            outputs=current_state, #self.state,
+            outputs=copy.deepcopy(self.state),
             parameter_names=self.parameter_names
         )
 
@@ -173,6 +180,35 @@ class LFIRE(ParameterInference):
         batch = {p: params[i] for i, p in enumerate(names)}
         return batch
 
+    def infer(self, *args, observed=None, **kwargs):
+        """Set the objective and start the iterate loop until the inference is finished.
+        See the other arguments from the `set_objective` method.
+
+        Parameters
+        ----------
+        observed: dict, optional
+            Observed data with node names as keys.
+        bar : bool, optional
+            Flag to remove (False) or keep (True) the progress bar from/in output.
+
+        Returns
+        -------
+        LFIREPosterior
+
+        """
+        # 1. extract observed sum stats
+        if observed is not None:
+            self.model.observed = observed
+        self.observed = self._get_observed_summary_values()
+
+        # 2. evaluate posterior
+        if self.state['n_batches'] == 0:
+            post=super(LFIRE, self).infer(*args, **kwargs)
+            self._prepare_posterior_evaluation()
+        else:
+            post=self._evaluate_posterior()
+        return post
+
     def save_models(self, filename):
         """Save parameter grid and classifier parameters.
 
@@ -196,14 +232,22 @@ class LFIRE(ParameterInference):
         filename: str
 
         """
+        # 1. load saved data:
         p = np.load(filename)
         for variable in p.files:
             self.state[variable] = p[variable]
-        # TODO: check that provided param names match elfi model and values match params_grid or overwrite params_grid
-        # TODO: check that loaded classifier params match self.classifier.parameter names and expected dimensions
-        self.state['n_batches'] = self.state[self.parameter_names[0]].shape[0]
+        # 2. check that parameter values match expectation:
+        for index, parameter_name in enumerate(self.parameter_names):
+            assert(parameter_name in self.state)
+            assert(np.all(self.params_grid[:,index]==self.state[parameter_name]))
+        # 3. check classifier parameters:
+        for cls_parameter in self.classifier.parameter_names:
+            assert(cls_parameter in self.state)
+        # 4. make posterior model:
+        self.state['n_batches'] = self.params_grid.shape[0]
+        self._prepare_posterior_evaluation()
 
-    def prepare_posterior_evaluation(self):
+    def _prepare_posterior_evaluation(self):
         """Precompute prior probabilities and initialise classifiers."""
         # compute prior probabilities
         self.pre['prior_value'] = self.joint_prior.pdf(self.params_grid)
@@ -214,32 +258,20 @@ class LFIRE(ParameterInference):
             model = self.classifier.load_model(params)
             self.pre['model'].append(model)
 
-    def evaluate_posterior(self, observed, simulator_name=None):
-        """Evaluate posterior probabilities based on provided observations."""
+    def _evaluate_posterior(self):
+        """Evaluates posterior probabilities.
 
-        # TODO: check that we have classifiers
+        Returns
+        -------
+        LFIREPosterior
 
-        # 1. convert observed data to sum stats
-        # TODO: check that the node simulator_name is simulator or maybe better: take simulator name from m.observed
-        if simulator_name is not None:
-            sums=self.model.generate(with_values={simulator_name: observed})
-            observed_ss = [sums[summary_name] for summary_name in self.summary_names]
-            observed_ss = np.column_stack(observed_ss)
-        else:
-            # note: this option may not be needed in case we assume that users want to input observations rather than summaries
-            observed_ss = observed
-        print(observed_ss)
-
-        # 2. calculate likelihood ratios and posterior probabilities
-
-        if len(self.pre['model']) < self.state['n_batches']:
-            self.prepare_posterior_evaluation()
+        """
         # TODO: add option to calculate prior probabilities and set up classifiers on the loop here
         for ii in range(self.state['n_batches']):
             # load precomputed model
             model = self.pre['model'][ii]
             # evaluate likelihood ratio
-            ratio = self.classifier.predict_likelihood_ratio(observed_ss, model = model)
+            ratio = self.classifier.predict_likelihood_ratio(self.observed, model = model)
             # calculate posterior value
             self.state['posterior'][ii] = self.pre['prior_value'][ii] * ratio
 
