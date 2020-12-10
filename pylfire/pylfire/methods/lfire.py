@@ -35,7 +35,8 @@ class LFIRE(ParameterInference):
     """
 
     def __init__(self, model, params_grid, marginal=None, classifier=None,
-                 output_names=None, seed_marginal=None, pre_filename=None, **kwargs):
+                 output_names=None, seed_marginal=None, precomputed_models=None, 
+                 **kwargs):
         """Initializes LFIRE.
 
         Parameters
@@ -54,7 +55,7 @@ class LFIRE(ParameterInference):
             A size of training data.
         seed_marginal: int, optional
             Seed for marginal data generation.
-        pre_filename: str, optional
+        precomputed_models: str, optional
             Precomputed classifier parameters file.
         kwargs:
             See InferenceMethod.
@@ -81,14 +82,14 @@ class LFIRE(ParameterInference):
         self.pre={'model': [], 'prior_value': np.array([])}
 
         # 4. initialise or load approximate posterior model:
-        if pre_filename is None:
+        if precomputed_models is None:
             self.marginal = self._resolve_marginal(marginal, seed_marginal)
             for parameter_name in self.parameter_names:
                 self.state[parameter_name] = np.empty(n_batches)
             for cls_parameter in self.classifier.parameter_names:
                     self.state[cls_parameter] = []
         else:
-            self.load_models(pre_filename)
+            self.load_models(precomputed_models)
 
 
     def set_objective(self):
