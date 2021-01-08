@@ -239,11 +239,17 @@ class LFIRE(ParameterInference):
             self.state[variable] = p[variable]
         # 2. check that parameter values match expectation:
         for index, parameter_name in enumerate(self.parameter_names):
-            assert(parameter_name in self.state)
-            assert(np.all(self.params_grid[:,index]==self.state[parameter_name]))
+            if parameter_name not in self.state:
+                raise KeyError('Model parameter {} '.format(parameter_name)
+                               + 'not found in saved data')
+            if np.all(self.params_grid[:,index] != self.state[parameter_name]):
+                raise ValueError('Parameter values in saved data do not match '
+                                 + 'the input parameter grid.')
         # 3. check classifier parameters:
         for cls_parameter in self.classifier.parameter_names:
-            assert(cls_parameter in self.state)
+            if cls_parameter not in self.state:
+                raise KeyError('Classifier parameter {} '.format(cls_parameter)
+                               + 'not found in saved data.')
         # 4. make posterior model:
         self.state['n_batches'] = self.params_grid.shape[0]
         self._prepare_posterior_evaluation()
