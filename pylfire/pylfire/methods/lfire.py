@@ -75,22 +75,22 @@ class LFIRE(ParameterInference):
         self._resolve_elfi_client(self.classifier.parallel_cv)
         n_batches = self.params_grid.shape[0]
 
-       # 3. initialise results containers:
+        # 3. initialise results containers:
         self.state['posterior'] = np.empty(n_batches)
         self.state['infinity'] = {parameter_name: [] for parameter_name in self.parameter_names}
-        # separate precomputed model container
-        self.pre={'model': [], 'prior_value': np.array([])}
 
-        # 4. initialise or load approximate posterior model:
+        # 4. initialise or load likelihood ratio models:
         if precomputed_models is None:
             self.marginal = self._resolve_marginal(marginal, seed_marginal)
             for parameter_name in self.parameter_names:
                 self.state[parameter_name] = np.empty(n_batches)
             for cls_parameter in self.classifier.parameter_names:
-                    self.state[cls_parameter] = []
+                self.state[cls_parameter] = [None] * n_batches
         else:
             self.load_models(precomputed_models)
 
+        # 5. calculate prior probabilities:
+        self.state['prior'] = self.joint_prior.pdf(params_grid)
 
     def set_objective(self):
         """Sets objective for inference."""
@@ -110,7 +110,6 @@ class LFIRE(ParameterInference):
             outputs=copy.deepcopy(self.state),
             parameter_names=self.parameter_names
         )
-
 
     def update(self, batch, batch_index):
         """Updates the inference state with a new batch and performs LFIRE.
@@ -136,15 +135,10 @@ class LFIRE(ParameterInference):
         self.classifier.fit(X, y)
 
         # Likelihood value
-        log_likelihood_value = self.classifier.predict_log_likelihood_ratio(self.observed)
-        likelihood_value = np.exp(log_likelihood_value)
-
-        # Joint prior value
-        parameter_values = [batch[parameter_name] for parameter_name in self.parameter_names]
-        joint_prior_value = self.joint_prior.pdf(parameter_values)
+        likelihood_ratio = self.classifier.predict_likelihood_ratio(self.observed)
 
         # Posterior value
-        posterior_value = joint_prior_value * likelihood_value
+        posterior_value = self.state['prior'][batch_index] * likelihood_ratio
 
         # Check if posterior value is non-finite
         if np.isinf(posterior_value):
@@ -162,7 +156,7 @@ class LFIRE(ParameterInference):
             self.state[parameter_name][batch_index] = batch[parameter_name]
         cls_params = self.classifier.attributes['parameters']
         for cls_parameter in self.classifier.parameter_names:
-            self.state[cls_parameter].append(cls_params[cls_parameter])
+            self.state[cls_parameter][batch_index] = cls_params[cls_parameter]
 
     def prepare_new_batch(self, batch_index):
         """Prepares a new batch for elfi.
@@ -203,9 +197,8 @@ class LFIRE(ParameterInference):
         self.observed = self._get_observed_summary_values()
 
         # 2. evaluate posterior
-        if self.state['n_batches'] == 0:
+        if self.state['n_batches'] < self.params_grid.shape[0]:
             post=super(LFIRE, self).infer(*args, **kwargs)
-            self._prepare_posterior_evaluation()
         else:
             post=self._evaluate_posterior()
         return post
@@ -250,20 +243,8 @@ class LFIRE(ParameterInference):
             if cls_parameter not in self.state:
                 raise KeyError('Classifier parameter {} '.format(cls_parameter)
                                + 'not found in saved data.')
-        # 4. make posterior model:
+        # 4. update inference state:
         self.state['n_batches'] = self.params_grid.shape[0]
-        self._prepare_posterior_evaluation()
-
-    def _prepare_posterior_evaluation(self):
-        """Precompute prior probabilities and initialise classifiers."""
-        # compute prior probabilities
-        self.pre['prior_value'] = self.joint_prior.pdf(self.params_grid)
-        # initialise classifiers
-        self.pre['model'] = []
-        for n in range(self.state['n_batches']):
-            params={param: self.state[param][n] for param in self.classifier.parameter_names}
-            model = self.classifier.load_model(params)
-            self.pre['model'].append(model)
 
     def _evaluate_posterior(self):
         """Evaluates posterior probabilities.
@@ -273,14 +254,12 @@ class LFIRE(ParameterInference):
         LFIREPosterior
 
         """
-        # TODO: add option to calculate prior probabilities and set up classifiers on the loop here
         for ii in range(self.state['n_batches']):
-            # load precomputed model
-            model = self.pre['model'][ii]
-            # evaluate likelihood ratio
-            ratio = self.classifier.predict_likelihood_ratio(self.observed, model = model)
+            # evaluate likelihood ratio with precomputed classifier parameters
+            params={param: self.state[param][ii] for param in self.classifier.parameter_names}
+            ratio = self.classifier.predict_likelihood_ratio(self.observed, params = params)
             # calculate posterior value
-            self.state['posterior'][ii] = self.pre['prior_value'][ii] * ratio
+            self.state['posterior'][ii] = self.state['prior'][ii] * ratio
 
         return self.extract_result()
 
@@ -369,7 +348,6 @@ class LFIRE(ParameterInference):
         observed_ss = [self.model[summary_name].observed for summary_name in self.summary_names]
         observed_ss = np.column_stack(observed_ss)
         return observed_ss
-
 
     def _resolve_classifier(self, classifier):
         """Resolves classifier."""

@@ -12,6 +12,7 @@ class Classifier:
         """Initializes a given classifier."""
         raise NotImplementedError
 
+
     def fit(self, X, y):
         """Fits a selected classification model.
 
@@ -25,7 +26,7 @@ class Classifier:
         """
         raise NotImplementedError
 
-    def predict_log_likelihood_ratio(self, X, model = None):
+    def predict_log_likelihood_ratio(self, X, params = None):
         """Predicts a log-likelihood ratio.
 
         Parameters
@@ -40,7 +41,7 @@ class Classifier:
         """
         raise NotImplementedError
 
-    def predict_likelihood_ratio(self, X, model = None):
+    def predict_likelihood_ratio(self, X, params = None):
         """Predicts a likelihood ratio.
 
         Parameters
@@ -53,7 +54,7 @@ class Classifier:
         np.ndarray
 
         """
-        return np.exp(self.predict_log_likelihood_ratio(X, model=model))
+        return np.exp(self.predict_log_likelihood_ratio(X, params=params))
 
     @property
     def attributes(self):
@@ -74,21 +75,18 @@ class LogisticRegression(Classifier):
         self.config = self._resolve_config(config, parallel_cv)
         self.model = LogitNet(**self.config)
         self.class_min = class_min
-        self.parameter_names=['intercept','coefficients']
+        self.parameter_names=['intercept', 'coef', 'lambda']
 
     def fit(self, X, y):
         """Fits logistic regression classifier."""
-        self._update_data_attributes(X, y)
         self.model.fit(X, y)
         self.model_params = [self.model.intercept_, self.model.coef_]
 
-    def load_model(self, parameters):
-        return [parameters['intercept'], parameters['coefficients']]
-
-    def predict_log_likelihood_ratio(self, X, model = None):
+    def predict_log_likelihood_ratio(self, X, params = None):
         """Predicts the log-likelihood ratio."""
-        if model is None: model = self.model_params
-        log_ratio = model[0] + np.sum(np.multiply(model[1], X))
+        if params:
+            self.model_params = [params['intercept'], params['coef']]
+        log_ratio = self.model_params[0] + np.sum(np.multiply(self.model_params[1], X))
         return np.maximum(log_ratio, np.log(self.class_min/(1-self.class_min)))
 
     @property
@@ -98,7 +96,7 @@ class LogisticRegression(Classifier):
             'parameters': {
                 'lambda': self.model.lambda_best_.tolist(),
                 'intercept': [self.model.intercept_],
-                'coefficients': self.model.coef_.ravel().tolist()
+                'coef': self.model.coef_.ravel().tolist()
             }
         }
 
@@ -122,10 +120,6 @@ class LogisticRegression(Classifier):
             config = self._get_default_config(parallel_cv)
         return config
 
-    def _update_data_attributes(self, X, y):
-        """Updates the data attributes."""
-        self.X, self.y = X, y
-
 
 class GPClassifier(Classifier):
     """Gaussian process classifier for ratio estimation."""
@@ -143,19 +137,11 @@ class GPClassifier(Classifier):
         self.model = self._initialize_model(X, y)
         self.model.optimize()
 
-    def load_model(self, params):
-        """Reconstructs a Gaussian process classifier."""
-        model = self._initialize_model(params['X'], params['Y'], initialize=False)
-        model.update_model(False)
-        model.initialize_parameter()
-        model[:] = params['param_array']
-        model.update_model(True)
-        return model
-
-    def predict_log_likelihood_ratio(self, X, model = None):
+    def predict_log_likelihood_ratio(self, X, params = None):
         """Predicts the log-likelihood ratio."""
-        if model is None: model = self.model
-        class_probs = np.maximum(model.predict(X)[0], self.class_min)
+        if params:
+            self.model = self._load_model(params['X'], params['Y'], params['param_array'])
+        class_probs = np.maximum(self.model.predict(X)[0], self.class_min)
         return np.log(class_probs / (1 - class_probs))
 
     @property
@@ -179,3 +165,12 @@ class GPClassifier(Classifier):
         mean_function = self.mean_function.copy() if self.mean_function else self.mean_function
         return GPClassification(X, y.reshape(-1, 1), kernel=kernel,
                                 mean_function=mean_function, initialize=initialize)
+
+    def _load_model(self, X, y, param_array):
+        """Reconsructs the Gaussian process classifier."""
+        model = self._initialize_model(X, y, initialize=False)
+        model.update_model(False)
+        model.initialize_parameter()
+        model[:] = param_array
+        model.update_model(True)
+        return model
