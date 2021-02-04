@@ -33,6 +33,9 @@ class Classifier:
         ----------
         X: np.ndarray (n_samples, n_features)
             Feature vectors of data.
+        params : dict, optional
+            Classifier parameter values. If not specified, most recent
+            fitted parameters are used.
 
         Returns
         -------
@@ -48,6 +51,9 @@ class Classifier:
         ----------
         X: np.ndarray (n_samples, n_features)
             Feature vectors of data.
+        params : dict, optional
+            Classifier parameter values. If not specified, most recent
+            fitted parameters are used.
 
         Returns
         -------
