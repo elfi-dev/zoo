@@ -6,7 +6,7 @@ import warnings
 import copy
 
 from multiprocessing import cpu_count
-from collections import OrderedDict
+from collections import defaultdict, OrderedDict
 
 import numpy as np
 
@@ -55,7 +55,7 @@ class LFIRE(ParameterInference):
             A size of training data.
         seed_marginal: int, optional
             Seed for marginal data generation.
-        precomputed_models: str, optional
+        precomputed_models: file or str, optional
             Precomputed classifier parameters file.
         kwargs:
             See InferenceMethod.
@@ -84,8 +84,6 @@ class LFIRE(ParameterInference):
             self.marginal = self._resolve_marginal(marginal, seed_marginal)
             for parameter_name in self.parameter_names:
                 self.state[parameter_name] = np.empty(n_batches)
-            for cls_parameter in self.classifier.parameter_names:
-                self.state[cls_parameter] = [None] * n_batches
         else:
             self.load_models(precomputed_models)
 
@@ -132,10 +130,10 @@ class LFIRE(ParameterInference):
         y = np.concatenate((np.ones(likelihood.shape[0]), -1 * np.ones(self.marginal.shape[0])))
 
         # Classification
-        self.classifier.fit(X, y)
+        self.classifier.fit(X, y, index=batch_index)
 
         # Likelihood value
-        likelihood_ratio = self.classifier.predict_likelihood_ratio(self.observed)
+        likelihood_ratio = self.classifier.predict_likelihood_ratio(self.observed, index = batch_index)
 
         # Posterior value
         posterior_value = self.state['prior'][batch_index] * likelihood_ratio
@@ -154,9 +152,6 @@ class LFIRE(ParameterInference):
         self.state['posterior'][batch_index] = posterior_value
         for parameter_name in self.parameter_names:
             self.state[parameter_name][batch_index] = batch[parameter_name]
-        cls_params = self.classifier.attributes['parameters']
-        for cls_parameter in self.classifier.parameter_names:
-            self.state[cls_parameter][batch_index] = cls_params[cls_parameter]
 
     def prepare_new_batch(self, batch_index):
         """Prepares a new batch for elfi.
@@ -203,52 +198,63 @@ class LFIRE(ParameterInference):
             post=self._evaluate_posterior()
         return post
 
-    def save_models(self, filename):
+    def save_models(self, file):
         """Save parameter grid and classifier parameters.
 
         Parameters
         ----------
-        filename: str
+        file: file or str
+            File or filename to which the data is saved.
 
         """
-        p={}
-        for parameter_name in self.parameter_names:
-            p[parameter_name] = self.state[parameter_name]
-        for cls_parameter in self.classifier.parameter_names:
-            p[cls_parameter] = self.state[cls_parameter]
-        np.savez(filename,**p)
+        data = defaultdict(list)
 
-    def load_models(self, filename):
+        # 1. parameter grid
+        for parameter_name in self.parameter_names:
+            data[parameter_name] = self.state[parameter_name]
+
+        # 2. classifier parameters
+        # store classifier parameters in the same order as parameter names:
+        for batch_index in range(self.state['n_batches']):
+            params = self.classifier.get(batch_index)
+            for param in params.keys():
+                data[param].append(params[param])
+
+        np.savez(file, **data)
+
+    def load_models(self, file):
         """Load parameter grid and classifier parameters.
 
         Parameters
         ----------
-        filename: str
+        file: file or str
+            File or filename that contains the data.
 
         """
-        # 1. load saved data:
-        p = np.load(filename)
-        for variable in p.files:
-            self.state[variable] = p[variable]
-        # 2. check that parameter values match expectation:
+        data = np.load(file)
+
+        # 1. load parameter grid:
         for index, parameter_name in enumerate(self.parameter_names):
-            if parameter_name not in self.state:
+            if parameter_name not in data:
                 raise KeyError('Model parameter {} '.format(parameter_name)
                                + 'not found in saved data')
-            if np.all(self.params_grid[:,index] != self.state[parameter_name]):
+            if np.all(self.params_grid[:,index] != data[parameter_name]):
                 raise ValueError('Parameter values in saved data do not match '
                                  + 'the input parameter grid.')
-        # 3. check classifier parameters:
-        for cls_parameter in self.classifier.parameter_names:
-            if cls_parameter not in self.state:
-                raise KeyError('Classifier parameter {} '.format(cls_parameter)
-                               + 'not found in saved data.')
-        # 4. update inference state:
-        self.state['n_batches'] = self.params_grid.shape[0]
+            self.state[parameter_name] = data[parameter_name]
+
+        # 2. load classifier parameters:
+        n_batches = self.params_grid.shape[0]
+        for batch_index in range(n_batches):
+            params = {param: data[param][batch_index] for param in data.files}
+            self.classifier.set(params, batch_index)
+
+        # 3. update inference state:
+        self.state['n_batches'] = n_batches
 
     def _evaluate_posterior(self):
         """Evaluates posterior probabilities.
-
+~
         Returns
         -------
         LFIREPosterior
@@ -256,8 +262,7 @@ class LFIRE(ParameterInference):
         """
         for ii in range(self.state['n_batches']):
             # evaluate likelihood ratio with precomputed classifier parameters
-            params={param: self.state[param][ii] for param in self.classifier.parameter_names}
-            ratio = self.classifier.predict_likelihood_ratio(self.observed, params = params)
+            ratio = self.classifier.predict_likelihood_ratio(self.observed, index = ii)
             # calculate posterior value
             self.state['posterior'][ii] = self.state['prior'][ii] * ratio
 
