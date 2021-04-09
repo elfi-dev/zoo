@@ -3,13 +3,14 @@ import pickle
 import os
 import json
 import warnings
+import copy
 
 from multiprocessing import cpu_count
-from collections import OrderedDict
+from collections import defaultdict, OrderedDict
 
 import numpy as np
 
-from glmnet import LogitNet
+from pylfire.classifiers.classifier import Classifier, LogisticRegression
 
 from elfi.client import set_client
 from elfi.methods.parameter_inference import ParameterInference
@@ -33,9 +34,9 @@ class LFIRE(ParameterInference):
 
     """
 
-    def __init__(self, model, params_grid, marginal=None,
-                 logreg_config=None, output_names=None, parallel_cv=True,
-                 seed_marginal=None, **kwargs):
+    def __init__(self, model, params_grid, marginal=None, classifier=None,
+                 output_names=None, seed_marginal=None, precomputed_models=None, 
+                 **kwargs):
         """Initializes LFIRE.
 
         Parameters
@@ -46,42 +47,48 @@ class LFIRE(ParameterInference):
             A grid over which posterior values are evaluated.
         marginal: np.ndarray, optional
             Marginal data.
-        logreg_config: dict, optional
-            A config dictionary for logistic regression.
+        classifier: str, optional
+            Classifier to be used. Default LogisticRegression.
         output_names: list, optional
             Names of the nodes whose outputs are included in the batches.
-        parallel_cv: bool, optional
-            Either cross-validation or elfi can be run in parallel.
         batch_size: int, optional
             A size of training data.
         seed_marginal: int, optional
             Seed for marginal data generation.
+        precomputed_models: file or str, optional
+            Precomputed classifier parameters file.
         kwargs:
             See InferenceMethod.
 
         """
         super(LFIRE, self).__init__(model, output_names, **kwargs)
 
+        # 1. parse model:
         self.summary_names = self._get_summary_names()
         if len(self.summary_names) == 0:
             raise NotImplementedError('Your model must have at least one Summary node.')
-
-        self.params_grid = self._resolve_params_grid(params_grid)
-        self.marginal = self._resolve_marginal(marginal, seed_marginal)
-        self.observed = self._get_observed_summary_values()
         self.joint_prior = ModelPrior(self.model)
-        self.logreg_config = self._resolve_logreg_config(logreg_config, parallel_cv)
 
-        self._resolve_elfi_client(parallel_cv)
-
+        # 2. LFIRE setup:
+        self.params_grid = self._resolve_params_grid(params_grid)
+        self.classifier = self._resolve_classifier(classifier)
+        self._resolve_elfi_client(self.classifier.parallel_cv)
         n_batches = self.params_grid.shape[0]
+
+        # 3. initialise results containers:
         self.state['posterior'] = np.empty(n_batches)
-        self.state['lambda'] = np.empty(n_batches)
-        self.state['coef'] = np.empty((n_batches, self.observed.shape[1]))
-        self.state['intercept'] = np.empty(n_batches)
         self.state['infinity'] = {parameter_name: [] for parameter_name in self.parameter_names}
-        for parameter_name in self.parameter_names:
-            self.state[parameter_name] = np.empty(n_batches)
+
+        # 4. initialise or load likelihood ratio models:
+        if precomputed_models is None:
+            self.marginal = self._resolve_marginal(marginal, seed_marginal)
+            for parameter_name in self.parameter_names:
+                self.state[parameter_name] = np.empty(n_batches)
+        else:
+            self.load_models(precomputed_models)
+
+        # 5. calculate prior probabilities:
+        self.state['prior'] = self.joint_prior.pdf(params_grid)
 
     def set_objective(self):
         """Sets objective for inference."""
@@ -98,7 +105,7 @@ class LFIRE(ParameterInference):
         """
         return LFIREPosterior(
             method_name='LFIRE',
-            outputs=self.state,
+            outputs=copy.deepcopy(self.state),
             parameter_names=self.parameter_names
         )
 
@@ -122,20 +129,14 @@ class LFIRE(ParameterInference):
         X = np.vstack((likelihood, self.marginal))
         y = np.concatenate((np.ones(likelihood.shape[0]), -1 * np.ones(self.marginal.shape[0])))
 
-        # Logistic regression
-        m = LogitNet(**self.logreg_config)
-        m.fit(X, y)
+        # Classification
+        self.classifier.fit(X, y, index=batch_index)
 
         # Likelihood value
-        log_likelihood_value = m.intercept_ + np.sum(np.multiply(m.coef_, self.observed))
-        likelihood_value = np.exp(log_likelihood_value)
-
-        # Joint prior value
-        parameter_values = [batch[parameter_name] for parameter_name in self.parameter_names]
-        joint_prior_value = self.joint_prior.pdf(parameter_values)
+        likelihood_ratio = self.classifier.predict_likelihood_ratio(self.observed, index = batch_index)
 
         # Posterior value
-        posterior_value = joint_prior_value * likelihood_value
+        posterior_value = self.state['prior'][batch_index] * likelihood_ratio
 
         # Check if posterior value is non-finite
         if np.isinf(posterior_value):
@@ -149,9 +150,6 @@ class LFIRE(ParameterInference):
 
         # Update state dictionary
         self.state['posterior'][batch_index] = posterior_value
-        self.state['lambda'][batch_index] = m.lambda_best_
-        self.state['coef'][batch_index, :] = m.coef_
-        self.state['intercept'][batch_index] = m.intercept_
         for parameter_name in self.parameter_names:
             self.state[parameter_name][batch_index] = batch[parameter_name]
 
@@ -171,6 +169,104 @@ class LFIRE(ParameterInference):
         names = self.parameter_names
         batch = {p: params[i] for i, p in enumerate(names)}
         return batch
+
+    def infer(self, *args, observed=None, **kwargs):
+        """Set the objective and start the iterate loop until the inference is finished.
+        See the other arguments from the `set_objective` method.
+
+        Parameters
+        ----------
+        observed: dict, optional
+            Observed data with node names as keys.
+        bar : bool, optional
+            Flag to remove (False) or keep (True) the progress bar from/in output.
+
+        Returns
+        -------
+        LFIREPosterior
+
+        """
+        # 1. extract observed sum stats
+        if observed is not None:
+            self.model.observed = observed
+        self.observed = self._get_observed_summary_values()
+
+        # 2. evaluate posterior
+        if self.state['n_batches'] < self.params_grid.shape[0]:
+            post=super(LFIRE, self).infer(*args, **kwargs)
+        else:
+            post=self._evaluate_posterior()
+        return post
+
+    def save_models(self, file):
+        """Save parameter grid and classifier parameters.
+
+        Parameters
+        ----------
+        file: file or str
+            File or filename to which the data is saved.
+
+        """
+        data = defaultdict(list)
+
+        # 1. parameter grid
+        for parameter_name in self.parameter_names:
+            data[parameter_name] = self.state[parameter_name]
+
+        # 2. classifier parameters
+        # store classifier parameters in the same order as parameter names:
+        for batch_index in range(self.state['n_batches']):
+            params = self.classifier.get(batch_index)
+            for param in params.keys():
+                data[param].append(params[param])
+
+        np.savez(file, **data)
+
+    def load_models(self, file):
+        """Load parameter grid and classifier parameters.
+
+        Parameters
+        ----------
+        file: file or str
+            File or filename that contains the data.
+
+        """
+        data = np.load(file)
+
+        # 1. load parameter grid:
+        for index, parameter_name in enumerate(self.parameter_names):
+            if parameter_name not in data:
+                raise KeyError('Model parameter {} '.format(parameter_name)
+                               + 'not found in saved data')
+            if np.all(self.params_grid[:,index] != data[parameter_name]):
+                raise ValueError('Parameter values in saved data do not match '
+                                 + 'the input parameter grid.')
+            self.state[parameter_name] = data[parameter_name]
+
+        # 2. load classifier parameters:
+        n_batches = self.params_grid.shape[0]
+        for batch_index in range(n_batches):
+            params = {param: data[param][batch_index] for param in data.files}
+            self.classifier.set(params, batch_index)
+
+        # 3. update inference state:
+        self.state['n_batches'] = n_batches
+
+    def _evaluate_posterior(self):
+        """Evaluates posterior probabilities.
+~
+        Returns
+        -------
+        LFIREPosterior
+
+        """
+        for ii in range(self.state['n_batches']):
+            # evaluate likelihood ratio with precomputed classifier parameters
+            ratio = self.classifier.predict_likelihood_ratio(self.observed, index = ii)
+            # calculate posterior value
+            self.state['posterior'][ii] = self.state['prior'][ii] * ratio
+
+        return self.extract_result()
 
     def _resolve_params_grid(self, params_grid):
         """Resolves parameters grid.
@@ -258,45 +354,14 @@ class LFIRE(ParameterInference):
         observed_ss = np.column_stack(observed_ss)
         return observed_ss
 
-    def _resolve_logreg_config(self, logreg_config, parallel_cv):
-        """Resolves logistic regression config.
-
-        Parameters
-        ----------
-        logreg_config: dict
-            Config dictionary for logistic regression.
-        parallel_cv: bool
-
-        Returns
-        -------
-        dict
-
-        """
-        if isinstance(logreg_config, dict):
-            # TODO: check valid kwargs
-            return logreg_config
+    def _resolve_classifier(self, classifier):
+        """Resolves classifier."""
+        if classifier is None:
+            return LogisticRegression()
+        elif isinstance(classifier, Classifier):
+            return classifier
         else:
-            return self._get_default_logreg_config(parallel_cv)
-
-    def _get_default_logreg_config(self, parallel_cv):
-        """Creates logistic regression config.
-
-        Parameters
-        ----------
-        parallel_cv: bool
-
-        Returns
-        -------
-        dict
-
-        """
-        logreg_config = {
-            'alpha': 1,
-            'n_splits': 10,
-            'n_jobs': cpu_count() if parallel_cv else 1,
-            'cut_point': 0
-        }
-        return logreg_config
+            raise ValueError('classifier must be an instance of Classifier.')
 
     def _resolve_elfi_client(self, parallel_cv):
         """Resolves elfi client. Either elfi or cross-validation can be run in parallel.
