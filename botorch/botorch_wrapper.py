@@ -47,6 +47,7 @@ class BoTorchModel(GPyRegression):
         seed : int, optional
 
         """
+        torch.manual_seed(seed)
         self.parameter_names = parameter_names
         self.input_dim = len(self.parameter_names)
         self.bounds = [bounds[param] for param in parameter_names]
